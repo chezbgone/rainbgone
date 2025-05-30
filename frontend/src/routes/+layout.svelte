@@ -1,7 +1,13 @@
 <script lang="ts">
-	import '../app.css';
+  import './app.css';
+  import Header from '$lib/Header.svelte';
+  import SearchBar from '$lib/SearchBar.svelte';
 
-	let { children } = $props();
+  import { page } from '$app/state';
+
+  let { children } = $props();
 </script>
 
+<Header />
+<SearchBar defaultAddress={ page.data.geocode.formatted_address ?? "" } />
 {@render children()}

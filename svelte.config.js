@@ -10,7 +10,7 @@ const config = {
   kit: {
     adapter: adapter(),
     files: {
-      assets: 'frontend/src/assets',
+      assets: 'frontend/static',
       hooks: {
         client: 'frontend/src/hooks.client',
         server: 'frontend/src/hooks.server',
