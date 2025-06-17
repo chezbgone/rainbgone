@@ -4,35 +4,64 @@
   import View from 'ol/View';
   import TileLayer from 'ol/layer/Tile';
   import OSM from 'ol/source/OSM';
+  import XYZ from 'ol/source/XYZ';
   import { useGeographic } from 'ol/proj';
+  import { apply } from "ol-mapbox-style";
+
+  import temp_base_style from './temp_base_style.json';
+  import precip_base_style from './precip_base_style.json';
 
   interface Props {
     location: {
       lat: number;
       lng: number;
     };
+    precipitationSoon: boolean;
   }
 
-  let { location }: Props = $props();
+  let { location, precipitationSoon }: Props = $props();
 
   function theMap(lat: number, lng: number) {
     return (element: HTMLDivElement) => {
       useGeographic();
+
+      const baseLayer = new TileLayer({
+        source: new OSM({ attributions: [] }),
+      });
+
+      const weatherLayer = new TileLayer({
+        source: new XYZ({
+          url: '/api/map/tiles/temp/{z}/{x}/{y}.png',
+          tileSize: 256,
+          maxZoom: 9,
+        }),
+        zIndex: 1,
+      });
+
+      const precipitationLayer = new TileLayer({
+        source: new XYZ({
+          url: '/api/map/tiles/precipitation/{z}/{x}/{y}.png',
+          tileSize: 256,
+          maxZoom: 9,
+        }),
+        zIndex: 1,
+      });
+
       let map: Map = new Map({
         target: element,
-        layers: [
-          new TileLayer({
-            source: new OSM(),
-          }),
-        ],
+        layers: [baseLayer, precipitationSoon ? precipitationLayer : weatherLayer],
         view: new View({
           center: [lng, lat],
           zoom: 6,
+          maxZoom: 19
         }),
       });
+      
+      apply(map, precipitationSoon ? precip_base_style : temp_base_style);
 
       $effect(() => {
         map.getView().setCenter([lng, lat]);
+
       })
       return () => {
         map.setTarget(undefined);

@@ -1,0 +1,424 @@
+{
+  "version": 8,
+  "id": "01976d37-ab32-739e-ab00-878194498028",
+  "name": "base",
+  "sources": {
+    "v3-openmaptiles": {
+      "url": "https://api.maptiler.com/tiles/v3-openmaptiles/tiles.json?key=1KVRvvNFg31OmtTekUiz",
+      "type": "vector"
+    }
+  },
+  "layers": [
+    {
+      "id": "Background",
+      "type": "background",
+      "layout": {
+        "visibility": "visible"
+      },
+      "paint": {
+        "background-color": "hsl(0, 0%, 87%)"
+      }
+    },
+    {
+      "id": "Ocean",
+      "type": "line",
+      "source": "v3-openmaptiles",
+      "source-layer": "water",
+      "minzoom": 0,
+      "maxzoom": 22,
+      "layout": {
+        "visibility": "visible"
+      },
+      "paint": {
+        "line-color": "hsl(0, 0%, 0%)"
+      },
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "geometry-type"
+          ],
+          "Polygon"
+        ],
+        [
+          "match",
+          [
+            "get",
+            "class"
+          ],
+          [
+            "ocean"
+          ],
+          true,
+          false
+        ]
+      ]
+    },
+    {
+      "id": "Lakes",
+      "type": "line",
+      "source": "v3-openmaptiles",
+      "source-layer": "water",
+      "minzoom": 0,
+      "maxzoom": 22,
+      "layout": {
+        "visibility": "visible"
+      },
+      "paint": {
+        "line-gap-width": 0,
+        "line-blur": 0,
+        "line-opacity": [
+          "interpolate",
+          [
+            "cubic-bezier",
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            "zoom"
+          ],
+          4,
+          0,
+          6,
+          1
+        ]
+      },
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "geometry-type"
+          ],
+          "Polygon"
+        ],
+        [
+          "match",
+          [
+            "get",
+            "class"
+          ],
+          [
+            "lake"
+          ],
+          true,
+          false
+        ]
+      ]
+    },
+    {
+      "id": "Roads",
+      "type": "line",
+      "source": "v3-openmaptiles",
+      "source-layer": "transportation",
+      "minzoom": 4,
+      "maxzoom": 22,
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round",
+        "visibility": "visible"
+      },
+      "paint": {
+        "line-color": [
+          "interpolate",
+          [
+            "cubic-bezier",
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            "zoom"
+          ],
+          6.4,
+          "hsla(30, 50%, 32%, 0)",
+          11.1,
+          "hsla(30, 50%, 32%, 0.7)"
+        ],
+        "line-opacity": 1,
+        "line-width": [
+          "interpolate",
+          [
+            "linear",
+            1
+          ],
+          [
+            "zoom"
+          ],
+          7,
+          [
+            "match",
+            [
+              "get",
+              "class"
+            ],
+            [
+              "motorway",
+              "trunk"
+            ],
+            1,
+            0
+          ],
+          10,
+          [
+            "match",
+            [
+              "get",
+              "class"
+            ],
+            [
+              "motorway",
+              "trunk"
+            ],
+            2,
+            0
+          ],
+          12,
+          [
+            "match",
+            [
+              "get",
+              "class"
+            ],
+            [
+              "motorway",
+              "trunk"
+            ],
+            3.5,
+            "primary",
+            0.75,
+            0
+          ],
+          13,
+          [
+            "match",
+            [
+              "get",
+              "class"
+            ],
+            [
+              "motorway",
+              "trunk"
+            ],
+            5,
+            "primary",
+            2.5,
+            0.5
+          ],
+          15,
+          [
+            "match",
+            [
+              "get",
+              "class"
+            ],
+            "motorway",
+            7,
+            "primary",
+            6,
+            3
+          ],
+          16,
+          [
+            "match",
+            [
+              "get",
+              "class"
+            ],
+            [
+              "motorway",
+              "trunk"
+            ],
+            8,
+            "primary",
+            7,
+            5
+          ],
+          17,
+          [
+            "match",
+            [
+              "get",
+              "class"
+            ],
+            [
+              "motorway",
+              "trunk"
+            ],
+            9,
+            8
+          ]
+        ]
+      },
+      "metadata": {},
+      "filter": [
+        "in",
+        "class",
+        "motorway",
+        "trunk",
+        "primary",
+        "secondary",
+        "tertiary",
+        "minor",
+        "service",
+        "pier"
+      ]
+    },
+    {
+      "id": "Local borders",
+      "type": "line",
+      "source": "v3-openmaptiles",
+      "source-layer": "boundary",
+      "layout": {},
+      "paint": {
+        "line-color": [
+          "interpolate",
+          [
+            "cubic-bezier",
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            "zoom"
+          ],
+          2,
+          "hsla(0, 0%, 0%, 0)",
+          6,
+          "hsl(0, 0%, 0%)"
+        ]
+      },
+      "filter": [
+        "all",
+        [
+          "all",
+          [
+            "match",
+            [
+              "get",
+              "admin_level"
+            ],
+            [
+              4
+            ],
+            true,
+            false
+          ],
+          [
+            "match",
+            [
+              "get",
+              "maritime"
+            ],
+            [
+              0
+            ],
+            true,
+            [
+              "!",
+              [
+                "has",
+                "maritime"
+              ]
+            ]
+          ]
+        ],
+        [
+          "==",
+          [
+            "geometry-type"
+          ],
+          "LineString"
+        ]
+      ]
+    },
+    {
+      "id": "Country borders",
+      "type": "line",
+      "source": "v3-openmaptiles",
+      "source-layer": "boundary",
+      "minzoom": 0,
+      "maxzoom": 22,
+      "layout": {
+        "visibility": "visible",
+        "line-cap": "butt"
+      },
+      "paint": {
+        "line-gap-width": 0,
+        "line-opacity": [
+          "interpolate",
+          [
+            "cubic-bezier",
+            0.5,
+            0,
+            0.5,
+            1
+          ],
+          [
+            "zoom"
+          ],
+          0,
+          0.25,
+          2.6,
+          1
+        ]
+      },
+      "metadata": {},
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "geometry-type"
+          ],
+          "LineString"
+        ],
+        [
+          "all",
+          [
+            "match",
+            [
+              "get",
+              "admin_level"
+            ],
+            [
+              2
+            ],
+            true,
+            false
+          ],
+          [
+            "match",
+            [
+              "get",
+              "maritime"
+            ],
+            [
+              0
+            ],
+            true,
+            [
+              "!",
+              [
+                "has",
+                "maritime"
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  "bearing": 0,
+  "pitch": 0,
+  "center": [
+    0,
+    0
+  ],
+  "zoom": 1
+}

@@ -4,6 +4,7 @@
   import Daily from '$lib/Daily/Daily.svelte';
   import Map from '$lib/Map.svelte';
 	import type { Geocode, Forecast } from './types';
+  import { classifyWeather, Weather } from '$lib/common/weather';
 
   interface Props {
     geocode: Geocode;
@@ -11,10 +12,30 @@
   }
 
   let { forecast, geocode }: Props = $props();
-  console.log(geocode);
+  
+  const precipitationSoon = $derived.by(() => {
+    if (!forecast?.hourly?.data) return false;
+    return forecast.hourly.data
+      .slice(0, 12)
+      .some(hour => {
+        const weather = classifyWeather(
+          hour.precipIntensity,
+          hour.precipType,
+          hour.cloudCover
+        );
+        return [
+          Weather.Rain,
+          Weather.LightRain,
+          Weather.Snow,
+          Weather.LightSnow,
+          Weather.Sleet,
+          Weather.LightSleet
+        ].includes(weather);
+      });
+  });
 </script>
 
 <Current currently={ forecast.currently } daily={ forecast.daily } />
 <Hourly hourly={ forecast.hourly } />
-<Map location={ geocode.geometry.location } />
+<Map location={ geocode.geometry.location } precipitationSoon={ precipitationSoon } />
 <Daily daily={ forecast.daily } hourly={ forecast.hourly } />
