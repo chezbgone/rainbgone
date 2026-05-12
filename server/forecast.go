@@ -47,6 +47,16 @@ func getForecast(lat, lon float64) ([]byte, error) {
 	return body, nil
 }
 
+type forecastResult struct {
+	body []byte
+	err  error
+}
+
+type reverseGeocodeResult struct {
+	result *GeocodeResult
+	err    error
+}
+
 func ForecastHandler(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 
@@ -63,40 +73,47 @@ func ForecastHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	forecastCh := make(chan []byte)
+	forecastCh := make(chan forecastResult, 1)
 	go func() {
 		forecastBytes, err := getForecast(lat, lng)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintf(w, "Error fetching weather data: %v", err)
-			return
+		forecastCh <- forecastResult{
+			body: forecastBytes,
+			err:  err,
 		}
-		forecastCh <- forecastBytes
 	}()
 
-	geocodeCh := make(chan *GeocodeResult)
+	geocodeCh := make(chan reverseGeocodeResult, 1)
 	go func() {
 		geocodeResp, err := reverseGeocode(lat, lng)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "%v", err)
-			return
+		geocodeCh <- reverseGeocodeResult{
+			result: geocodeResp,
+			err:    err,
 		}
-		geocodeCh <- geocodeResp
 	}()
 
-	forecastBytes := <-forecastCh
+	forecastResp := <-forecastCh
+	if forecastResp.err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "Error fetching weather data: %v", forecastResp.err)
+		return
+	}
+
 	geocodeResp := <-geocodeCh
+	if geocodeResp.err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "%v", geocodeResp.err)
+		return
+	}
 
 	var forecastMap map[string]interface{}
-	err = json.Unmarshal(forecastBytes, &forecastMap)
+	err = json.Unmarshal(forecastResp.body, &forecastMap)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "Error parsing weather data: %v", err)
 		return
 	}
 
-	forecastMap["formatted_address"] = geocodeResp.FormattedAddress
+	forecastMap["formatted_address"] = geocodeResp.result.FormattedAddress
 
 	responseBytes, err := json.Marshal(forecastMap)
 	if err != nil {
