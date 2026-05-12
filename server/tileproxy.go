@@ -50,6 +50,10 @@ func (c *cache) Set(key string, body []byte, ttl time.Duration) {
 
 var tileCache = newCache()
 
+var tileHTTPClient = &http.Client{
+	Timeout: 10 * time.Second,
+}
+
 var MAPTILER_KEY string
 
 func init() {
@@ -93,7 +97,7 @@ func TileHandler(w http.ResponseWriter, r *http.Request) {
 	url := fmt.Sprintf("https://api.maptiler.com/tiles/%s/%s/%s/%s.png?api_key=%s",
 		layer, z, x, y, MAPTILER_KEY)
 
-	resp, err := http.Get(url)
+	resp, err := tileHTTPClient.Get(url)
 	if err != nil {
 		http.Error(w, "Failed to fetch tile", http.StatusInternalServerError)
 		return

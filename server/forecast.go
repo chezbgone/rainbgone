@@ -7,11 +7,16 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/joho/godotenv"
 )
 
 var PIRATE_WEATHER_KEY string
+
+var forecastHTTPClient = &http.Client{
+	Timeout: 10 * time.Second,
+}
 
 func init() {
 	env, err := godotenv.Read()
@@ -28,7 +33,7 @@ func getForecast(lat, lon float64) ([]byte, error) {
 	params.Add("extend", "hourly")
 	url := fmt.Sprintf("%s/%s/%f,%f?%s", baseURL, apiKey, lat, lon, params.Encode())
 
-	resp, err := http.Get(url)
+	resp, err := forecastHTTPClient.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching weather data: %w", err)
 	}

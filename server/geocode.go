@@ -7,7 +7,12 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 )
+
+var geocodeHTTPClient = &http.Client{
+	Timeout: 5 * time.Second,
+}
 
 type Location struct {
 	Lat float64 `json:"lat"`
@@ -63,8 +68,7 @@ func geocode(address string) (*GeocodeResponse, error) {
 	}
 	req.Header.Set("User-Agent", "rainbgone/1.0")
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := geocodeHTTPClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("error geocoding address: %w", err)
 	}
@@ -125,8 +129,7 @@ func reverseGeocode(lat, lng float64) (*GeocodeResult, error) {
 	}
 	req.Header.Set("User-Agent", "rainbgone/1.0")
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := geocodeHTTPClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("error reverse geocoding: %w", err)
 	}
