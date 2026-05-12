@@ -47,19 +47,20 @@
   });
 </script>
 
-<div class="text-center my-4">
-  <div class="inline-flex flex-col">
-    <div class="flex w-[800px] h-10">
+<div class="my-4 flex justify-center text-center">
+  <div class="flex w-full max-w-[800px] flex-col">
+    <div class="flex h-10 w-full">
       {#each stripes as stripe}
         {@const weather = weatherInfo[stripe.weather]}
         <div
-          style="width:{stripe.width * 33.33}px;
+          style="flex-grow: {stripe.width};
+            flex-basis: 0;
             background-color: {weather.color};"
           class="h-full flex justify-center items-center first:rounded-l last:rounded-r text-sm"
           class:text-neutral-800={weather.labelInfo.darkText}
-          class:text-shadow-[1px_1px_0_rgba(255,255,255,0.5)]={weather.labelInfo.darkText}
+          class:text-shadow-[1px_1px_0_rgba(255,255,255,0.2)]={weather.labelInfo.darkText}
           class:text-white={!weather.labelInfo.darkText}
-          class:text-shadow-[1px_1px_0_rgba(0,0,0,0.5)]={!weather.labelInfo.darkText}>
+          class:text-shadow-[1px_1px_0_rgba(0,0,0,0.2)]={!weather.labelInfo.darkText}>
           {#if stripe.width >= weather.labelInfo.requiredWidth}
             {weather.labelInfo.text}
           {/if}
@@ -68,14 +69,14 @@
     </div>
 
     <!-- ticks -->
-    <div class="w-[800px] mt-1 flex justify-between">
+    <div class="mt-1 flex w-full justify-between">
       {#each Array(25) as _}
         <span class="border-l border-neutral-400 even:h-1 odd:h-2"></span>
       {/each}
     </div>
 
     <!-- labels -->
-    <div class="w-[800px] h-4 flex justify-between pb-12">
+    <div class="flex h-4 w-full justify-between pb-12">
       {#each ticks as tick}
         <div class="group relative even:hidden">
           <div class="absolute top-0 not-group-first:-translate-x-1/2 text-xs">
@@ -86,7 +87,6 @@
           </div>
         </div>
       {/each}
-      <div></div>
     </div>
   </div>
 </div>

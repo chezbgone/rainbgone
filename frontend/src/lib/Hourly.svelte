@@ -1,8 +1,6 @@
 <script lang="ts">
 
-  import type { Tick, Stripe } from "$lib/common/Stripes.svelte";
   import Stripes from "$lib/common/Stripes.svelte";
-  import { classifyWeather } from "./common/weather";
   import type { Forecast } from "./Forecast/types";
 
   interface Props {

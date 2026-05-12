@@ -47,7 +47,7 @@
         zIndex: 1,
       });
 
-      let map: Map = new Map({
+      let map: Map | null = new Map({
         target: element,
         layers: [baseLayer, precipitationSoon ? precipitationLayer : weatherLayer],
         view: new View({
@@ -60,11 +60,11 @@
       apply(map, precipitationSoon ? precip_base_style : temp_base_style);
 
       $effect(() => {
-        map.getView().setCenter([lng, lat]);
+        map?.getView().setCenter([lng, lat]);
 
       })
       return () => {
-        map.setTarget(undefined);
+        map?.setTarget(undefined);
         map = null; // dereference for GC
       }
     }
