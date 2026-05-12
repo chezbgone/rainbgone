@@ -18,6 +18,10 @@ var forecastHTTPClient = &http.Client{
 	Timeout: 10 * time.Second,
 }
 
+var forecastCache = newCache()
+
+const forecastCacheTTL = 1 * time.Minute
+
 func init() {
 	env, err := godotenv.Read()
 	if err != nil {
@@ -27,6 +31,11 @@ func init() {
 }
 
 func getForecast(lat, lon float64) ([]byte, error) {
+	cacheKey := fmt.Sprintf("%f,%f", lat, lon)
+	if cached, found := forecastCache.Get(cacheKey); found {
+		return cached, nil
+	}
+
 	baseURL := "https://api.pirateweather.net/forecast"
 	apiKey := PIRATE_WEATHER_KEY
 	params := url.Values{}
@@ -44,6 +53,7 @@ func getForecast(lat, lon float64) ([]byte, error) {
 		return nil, fmt.Errorf("error reading weather data: %w", err)
 	}
 
+	forecastCache.Set(cacheKey, body, forecastCacheTTL)
 	return body, nil
 }
 

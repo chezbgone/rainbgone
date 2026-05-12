@@ -14,6 +14,10 @@ var geocodeHTTPClient = &http.Client{
 	Timeout: 5 * time.Second,
 }
 
+var reverseGeocodeCache = newCache()
+
+const reverseGeocodeCacheTTL = 24 * time.Hour
+
 type Location struct {
 	Lat float64 `json:"lat"`
 	Lng float64 `json:"lng"`
@@ -116,6 +120,11 @@ func geocode(address string) (*GeocodeResponse, error) {
 }
 
 func reverseGeocode(lat, lng float64) (*GeocodeResult, error) {
+	cacheKey := fmt.Sprintf("%f,%f", lat, lng)
+	if cached, found := reverseGeocodeCache.Get(cacheKey); found {
+		return parseReverseGeocode(cached)
+	}
+
 	baseURL := "https://nominatim.openstreetmap.org/reverse"
 	params := url.Values{}
 	params.Add("lat", fmt.Sprintf("%f", lat))
@@ -140,8 +149,18 @@ func reverseGeocode(lat, lng float64) (*GeocodeResult, error) {
 		return nil, fmt.Errorf("error reading reverse geocoding response: %w", err)
 	}
 
+	geocodeResult, err := parseReverseGeocode(body)
+	if err != nil {
+		return nil, err
+	}
+
+	reverseGeocodeCache.Set(cacheKey, body, reverseGeocodeCacheTTL)
+	return geocodeResult, nil
+}
+
+func parseReverseGeocode(body []byte) (*GeocodeResult, error) {
 	var nomResult NominatimReverseResult
-	err = json.Unmarshal(body, &nomResult)
+	err := json.Unmarshal(body, &nomResult)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing reverse geocoding response: %w", err)
 	}
