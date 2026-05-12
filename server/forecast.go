@@ -8,11 +8,7 @@ import (
 	"net/url"
 	"strconv"
 	"time"
-
-	"github.com/joho/godotenv"
 )
-
-var PIRATE_WEATHER_KEY string
 
 var forecastHTTPClient = &http.Client{
 	Timeout: 10 * time.Second,
@@ -22,14 +18,6 @@ var forecastCache = newCache()
 
 const forecastCacheTTL = 1 * time.Minute
 
-func init() {
-	env, err := godotenv.Read()
-	if err != nil {
-		panic(err)
-	}
-	PIRATE_WEATHER_KEY = env["PIRATE_WEATHER_KEY"]
-}
-
 func getForecast(lat, lon float64) ([]byte, error) {
 	cacheKey := fmt.Sprintf("%f,%f", lat, lon)
 	if cached, found := forecastCache.Get(cacheKey); found {
@@ -37,7 +25,7 @@ func getForecast(lat, lon float64) ([]byte, error) {
 	}
 
 	baseURL := "https://api.pirateweather.net/forecast"
-	apiKey := PIRATE_WEATHER_KEY
+	apiKey := appConfig.pirateWeatherKey
 	params := url.Values{}
 	params.Add("extend", "hourly")
 	url := fmt.Sprintf("%s/%s/%f,%f?%s", baseURL, apiKey, lat, lon, params.Encode())

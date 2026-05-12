@@ -6,24 +6,12 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/joho/godotenv"
 )
 
 var tileCache = newCache()
 
 var tileHTTPClient = &http.Client{
 	Timeout: 10 * time.Second,
-}
-
-var MAPTILER_KEY string
-
-func init() {
-	env, err := godotenv.Read()
-	if err != nil {
-		panic(err)
-	}
-	MAPTILER_KEY = env["MAPTILER_KEY"]
 }
 
 func TileHandler(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +45,7 @@ func TileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	url := fmt.Sprintf("https://api.maptiler.com/tiles/%s/%s/%s/%s.png?api_key=%s",
-		layer, z, x, y, MAPTILER_KEY)
+		layer, z, x, y, appConfig.mapTilerKey)
 
 	resp, err := tileHTTPClient.Get(url)
 	if err != nil {
