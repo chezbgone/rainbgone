@@ -71,8 +71,7 @@ func ForecastHandler(w http.ResponseWriter, r *http.Request) {
 
 	geocodeCh := make(chan *GeocodeResult)
 	go func() {
-		address := fmt.Sprintf("%f,%f", lat, lng)
-		geocodeResp, err := geocode_one(address)
+		geocodeResp, err := reverseGeocode(lat, lng)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintf(w, "%v", err)

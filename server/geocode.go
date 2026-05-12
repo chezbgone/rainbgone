@@ -6,8 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-
-	"github.com/joho/godotenv"
+	"strconv"
 )
 
 type Location struct {
@@ -36,24 +35,36 @@ type GeocodeResponse struct {
 	Results []GeocodeResult `json:"results"`
 }
 
-var GOOGLE_MAPS_API_KEY string
+// NominatimSearchResult represents a result from Nominatim search endpoint
+type NominatimSearchResult struct {
+	Lat         string `json:"lat"`
+	Lon         string `json:"lon"`
+	DisplayName string `json:"display_name"`
+}
 
-func init() {
-	env, err := godotenv.Read()
-	if err != nil {
-		panic(err)
-	}
-	GOOGLE_MAPS_API_KEY = env["GOOGLE_MAPS_API_KEY"]
+// NominatimReverseResult represents a result from Nominatim reverse endpoint
+type NominatimReverseResult struct {
+	Lat         string `json:"lat"`
+	Lon         string `json:"lon"`
+	DisplayName string `json:"display_name"`
 }
 
 func geocode(address string) (*GeocodeResponse, error) {
-	baseURL := "https://maps.googleapis.com/maps/api/geocode/json"
+	baseURL := "https://nominatim.openstreetmap.org/search"
 	params := url.Values{}
-	params.Add("key", GOOGLE_MAPS_API_KEY)
-	params.Add("address", address)
+	params.Add("q", address)
+	params.Add("format", "json")
+	params.Add("limit", "1")
 
-	url := fmt.Sprintf("%s?%s", baseURL, params.Encode())
-	resp, err := http.Get(url)
+	urlStr := fmt.Sprintf("%s?%s", baseURL, params.Encode())
+	req, err := http.NewRequest("GET", urlStr, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+	req.Header.Set("User-Agent", "rainbgone/1.0")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("error geocoding address: %w", err)
 	}
@@ -64,17 +75,92 @@ func geocode(address string) (*GeocodeResponse, error) {
 		return nil, fmt.Errorf("error reading geocoding response: %w", err)
 	}
 
-	var geocodeResp GeocodeResponse
-	err = json.Unmarshal(body, &geocodeResp)
+	var nominatimResults []NominatimSearchResult
+	err = json.Unmarshal(body, &nominatimResults)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing geocoding response: %w", err)
 	}
 
-	if geocodeResp.Status != "OK" {
-		return nil, fmt.Errorf("invalid geocoding response: status=%s, results=%d", geocodeResp.Status, len(geocodeResp.Results))
+	if len(nominatimResults) == 0 {
+		return nil, fmt.Errorf("no results found for address: %s", address)
 	}
 
-	return &geocodeResp, nil
+	nomResult := nominatimResults[0]
+	lat, err := strconv.ParseFloat(nomResult.Lat, 64)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing lat: %w", err)
+	}
+	lng, err := strconv.ParseFloat(nomResult.Lon, 64)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing lon: %w", err)
+	}
+
+	geocodeResult := GeocodeResult{
+		FormattedAddress: nomResult.DisplayName,
+		Geometry: Geometry{
+			Location: Location{
+				Lat: lat,
+				Lng: lng,
+			},
+		},
+	}
+
+	return &GeocodeResponse{
+		Status:  "OK",
+		Results: []GeocodeResult{geocodeResult},
+	}, nil
+}
+
+func reverseGeocode(lat, lng float64) (*GeocodeResult, error) {
+	baseURL := "https://nominatim.openstreetmap.org/reverse"
+	params := url.Values{}
+	params.Add("lat", fmt.Sprintf("%f", lat))
+	params.Add("lon", fmt.Sprintf("%f", lng))
+	params.Add("format", "json")
+
+	urlStr := fmt.Sprintf("%s?%s", baseURL, params.Encode())
+	req, err := http.NewRequest("GET", urlStr, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+	req.Header.Set("User-Agent", "rainbgone/1.0")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("error reverse geocoding: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading reverse geocoding response: %w", err)
+	}
+
+	var nomResult NominatimReverseResult
+	err = json.Unmarshal(body, &nomResult)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing reverse geocoding response: %w", err)
+	}
+
+	latParsed, err := strconv.ParseFloat(nomResult.Lat, 64)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing lat: %w", err)
+	}
+	lngParsed, err := strconv.ParseFloat(nomResult.Lon, 64)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing lon: %w", err)
+	}
+
+	return &GeocodeResult{
+		FormattedAddress: nomResult.DisplayName,
+		Geometry: Geometry{
+			Location: Location{
+				Lat: latParsed,
+				Lng: lngParsed,
+			},
+		},
+	}, nil
 }
 
 func geocode_one(address string) (*GeocodeResult, error) {
