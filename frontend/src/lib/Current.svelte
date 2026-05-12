@@ -1,13 +1,15 @@
 <script lang="ts">
   import Measurement from '$lib/common/Measurement.svelte';
 	import type { Forecast } from './Forecast/types';
+	import Minutely from './Minutely.svelte';
 
   interface Props {
     currently: Forecast['currently'];
+    minutely: Forecast['minutely'];
     daily: Forecast['daily'];
   }
 
-  let { currently, daily }: Props = $props();
+  let { currently, minutely, daily }: Props = $props();
 </script>
 
 <div class="flex justify-center gap-4 bg-neutral-100 py-2 text-sm">
@@ -51,8 +53,8 @@
       </div>
     </div>
   </div>
-
   <div class="text-center text-2xl font-light">
     {currently.summary}.
   </div>
+  <Minutely minutely={minutely} />
 </div>

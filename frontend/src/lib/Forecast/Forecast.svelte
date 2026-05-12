@@ -35,7 +35,7 @@
   });
 </script>
 
-<Current currently={ forecast.currently } daily={ forecast.daily } />
+<Current currently={ forecast.currently } minutely={ forecast.minutely } daily={ forecast.daily } />
 <Hourly hourly={ forecast.hourly } />
 <Map location={ geocode.geometry.location } precipitationSoon={ precipitationSoon } />
 <Daily daily={ forecast.daily } hourly={ forecast.hourly } />
