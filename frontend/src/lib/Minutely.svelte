@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import type { Forecast } from '$lib/Forecast/types';
 
 	interface Props {
@@ -109,8 +108,9 @@
 		frameId = requestAnimationFrame(drawFrame);
 	};
 
-	onMount(() => {
+	$effect(() => {
 		if (!hasPrecip || !canvas) {
+			cancelAnimationFrame(frameId);
 			return;
 		}
 
