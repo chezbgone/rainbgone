@@ -5,13 +5,17 @@ import (
 	"net/http"
 )
 
+func NewMux() *http.ServeMux {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/geocode", GeocodeHandler)
+	mux.HandleFunc("/forecast", ForecastHandler)
+	mux.HandleFunc("/map/tiles/", TileHandler)
+
+	return mux
+}
+
 func Start() {
-	http.HandleFunc("/geocode", GeocodeHandler)
-
-	http.HandleFunc("/forecast", ForecastHandler)
-
-	http.HandleFunc("/map/tiles/", TileHandler)
-
 	fmt.Println("Server started at http://localhost:8080")
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8080", NewMux())
 }
