@@ -2,7 +2,7 @@
   import Current from '$lib/Current.svelte';
   import Hourly from '$lib/Hourly.svelte';
   import Daily from '$lib/Daily/Daily.svelte';
-  import Map from '$lib/Map.svelte';
+  import LazyMap from '$lib/LazyMap.svelte';
 	import type { Geocode, Forecast } from './types';
   import { classifyWeather, Weather } from '$lib/common/weather';
 
@@ -37,5 +37,5 @@
 
 <Current currently={ forecast.currently } minutely={ forecast.minutely } daily={ forecast.daily } />
 <Hourly hourly={ forecast.hourly } />
-<Map location={ geocode.geometry.location } precipitationSoon={ precipitationSoon } />
+<LazyMap location={ geocode.geometry.location } precipitationSoon={ precipitationSoon } />
 <Daily daily={ forecast.daily } hourly={ forecast.hourly } />
