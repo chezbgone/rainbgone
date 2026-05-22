@@ -1,0 +1,9 @@
+.git
+.svelte-kit
+.env
+.env.*
+frontend
+node_modules
+npm-debug.log*
+Dockerfile*
+docker-compose*.yml
