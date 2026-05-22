@@ -28,7 +28,7 @@
 </script>
 
 <details bind:open={opened}>
-  <summary class="group flex items-center px-4 py-2 hover:bg-gray-50">
+  <summary class="group flex items-center px-4 py-2 hover:bg-gray-50 hover:cursor-pointer">
     <img src={`/weather-icons/${daily.icon}.png`} alt={daily.icon} class="h-8" />
     <span class="w-16 mx-2">{getDayName(daily.time)}</span>
     <span class="relative flex items-center w-lg h-4 mx-16">
@@ -96,6 +96,8 @@
       </div>
     </div>
     <Stripes hours={hourly} />
-    <button class="px-4 py-2 mb-4 rounded-sm bg-blue-500 hover:bg-blue-600 text-white uppercase">more details</button>
+    <button class="px-4 py-2 mb-4 rounded-sm bg-blue-500 hover:bg-blue-600 hover:pointer-cursor text-white uppercase">
+      more details
+    </button>
   </div>
 </details>
