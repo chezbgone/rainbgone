@@ -1,6 +1,6 @@
 <script lang="ts">
   import Stripes from "$lib/common/Stripes.svelte";
-  import { formatUnixTime } from "$lib/common/time";
+  import { formatDateKey, formatUnixTime } from "$lib/common/time";
   import type { Forecast } from "../Forecast/types";
 
   interface Props {
@@ -9,9 +9,12 @@
     minTemp: number;
     maxTemp: number;
     today: boolean;
+    lat: number;
+    lng: number;
+    timezone: string;
   }
 
-  let { daily, hourly, minTemp, maxTemp, today }: Props = $props();
+  let { daily, hourly, minTemp, maxTemp, today, lat, lng, timezone }: Props = $props();
 
   const getDayName = (dt: number) => {
     if (today) return 'Today';
@@ -25,6 +28,7 @@
   const right = (daily.temperatureMax - minTemp) / (maxTemp - minTemp) * 100;
 
   let opened = $state(false);
+  const detailsHref = $derived(`/details/${lat},${lng}/${formatDateKey(daily.time, timezone)}`);
 </script>
 
 <details bind:open={opened}>
@@ -96,8 +100,8 @@
       </div>
     </div>
     <Stripes hours={hourly} />
-    <button class="px-4 py-2 mb-4 rounded-sm bg-blue-500 hover:bg-blue-600 hover:pointer-cursor text-white uppercase">
+    <a href={detailsHref} class="inline-block px-4 py-2 mb-4 rounded-sm bg-blue-500 hover:bg-blue-600 text-white uppercase">
       more details
-    </button>
+    </a>
   </div>
 </details>

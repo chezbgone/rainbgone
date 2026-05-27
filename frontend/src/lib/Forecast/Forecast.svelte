@@ -38,4 +38,10 @@
 <Current currently={ forecast.currently } minutely={ forecast.minutely } daily={ forecast.daily } />
 <Hourly hourly={ forecast.hourly } />
 <LazyMap location={ geocode.geometry.location } precipitationSoon={ precipitationSoon } />
-<Daily daily={ forecast.daily } hourly={ forecast.hourly } />
+<Daily
+  daily={ forecast.daily }
+  hourly={ forecast.hourly }
+  lat={ geocode.geometry.location.lat }
+  lng={ geocode.geometry.location.lng }
+  timezone={ forecast.timezone }
+/>

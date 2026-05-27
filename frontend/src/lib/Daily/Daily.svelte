@@ -5,9 +5,12 @@
   interface Props {
     daily: Forecast['daily'];
     hourly: Forecast['hourly'];
+    lat: number;
+    lng: number;
+    timezone: string;
   }
 
-  let { daily, hourly }: Props = $props();
+  let { daily, hourly, lat, lng, timezone }: Props = $props();
 
   const days = $derived(daily.data);
   const daysHourly = $derived.by(() => {
@@ -26,7 +29,16 @@
   <div class="text-xl font-light m-4">{daily.summary}</div>
   <div class="flex flex-col items-center gap-2">
     {#each days.slice(0, 7) as day, i}
-      <Day today={i === 0} daily={day} minTemp={minTemp} maxTemp={maxTemp} hourly={daysHourly[i]} />
+      <Day
+        today={i === 0}
+        daily={day}
+        minTemp={minTemp}
+        maxTemp={maxTemp}
+        hourly={daysHourly[i]}
+        lat={lat}
+        lng={lng}
+        timezone={timezone}
+      />
     {/each}
   </div>
 </div>
