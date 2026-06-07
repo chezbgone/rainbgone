@@ -3,7 +3,6 @@
   import Map from 'ol/Map';
   import View from 'ol/View';
   import TileLayer from 'ol/layer/Tile';
-  import OSM from 'ol/source/OSM';
   import XYZ from 'ol/source/XYZ';
   import { useGeographic } from 'ol/proj';
   import { apply } from "ol-mapbox-style";
@@ -25,31 +24,29 @@
     return (element: HTMLDivElement) => {
       useGeographic();
 
-      const baseLayer = new TileLayer({
-        source: new OSM({ attributions: [] }),
-      });
-
-      const weatherLayer = new TileLayer({
+      const temperatureBackgroundLayer = new TileLayer({
         source: new XYZ({
-          url: '/api/map/tiles/temp/{z}/{x}/{y}.png',
+          url: '/api/map/background-tiles/temp/{z}/{x}/{y}.png',
           tileSize: 256,
           maxZoom: 9,
         }),
-        zIndex: 1,
       });
 
-      const precipitationLayer = new TileLayer({
+      const precipitationBackgroundLayer = new TileLayer({
         source: new XYZ({
-          url: '/api/map/tiles/precipitation/{z}/{x}/{y}.png',
+          url: '/api/map/background-tiles/precipitation/{z}/{x}/{y}.png',
           tileSize: 256,
           maxZoom: 9,
         }),
-        zIndex: 1,
       });
 
       let map: Map | null = new Map({
         target: element,
-        layers: [baseLayer, precipitationSoon ? precipitationLayer : weatherLayer],
+        layers: [
+          precipitationSoon
+            ? precipitationBackgroundLayer
+            : temperatureBackgroundLayer
+        ],
         view: new View({
           center: [lng, lat],
           zoom: 6,
