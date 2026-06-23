@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // empty' | { read -r f; echo \"$f\" | grep -qE '\\.go$' && gofmt -w \"$f\"; } 2>/dev/null || true",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // empty' | { read -r f; echo \"$f\" | grep -qE '\\.(svelte|ts|js)$' && cd /home/jason/documents/rainbgone/frontend && npx prettier --write \"$f\"; } 2>/dev/null || true",
+            "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "/home/jason/documents/rainbgone/.claude/hooks/golangci-lint.sh",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}
