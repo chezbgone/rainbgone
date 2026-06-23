@@ -93,7 +93,7 @@ Current map behavior:
 1. OpenLayers initializes a map with geographic coordinates.
 2. A MapTiler temperature background variant is configured at `/api/map/background-tiles/temp/{z}/{x}/{y}.png`.
 3. A MapTiler precipitation background variant is configured at `/api/map/background-tiles/precipitation/{z}/{x}/{y}.png`.
-4. The imported MapTiler style JSON supplies base geography styling.
+4. OpenFreeMap style JSON supplies base geography styling (roads, borders, water, city labels).
 5. `Forecast.svelte` derives `precipitationSoon` from the next 12 hours of forecast data.
 6. `Map.svelte` shows the precipitation background variant when `precipitationSoon` is true; otherwise it shows the temperature background variant.
 7. `ol-mapbox-style` applies either `frontend/src/lib/precip_base_style.json` or `frontend/src/lib/temp_base_style.json`.
@@ -125,7 +125,8 @@ Tile responses are cached in memory for five minutes.
 | --- | --- | --- |
 | Pirate Weather | `server/forecast.go` | Forecast source. Uses `extend=hourly`. |
 | Nominatim | `server/geocode.go` | Search and reverse geocoding. Sets `User-Agent: rainbgone/1.0`. |
-| MapTiler | `server/tileproxy.go`, map style JSON files | Background/base map tile source and base geography styling for the current map. |
+| MapTiler | `server/tileproxy.go` | Raster background tile source (temperature and precipitation variants). |
+| OpenFreeMap | map style JSON files | Vector base geography (roads, borders, water, city labels). No API key required. |
 
 MapTiler background tile IDs are provider-controlled and may change. Before changing tile proxy code, verify the provider URL, authentication parameter, tile size, zoom bounds, and response content type with a non-secret command.
 
@@ -202,7 +203,7 @@ When changing map layers:
 2. Verify provider tile URLs and zoom bounds before hard-coding layer IDs.
 3. Confirm temperature and precipitation background variants both still render base geography.
 4. Do not commit provider-generated style files that contain embedded API keys.
-5. Render future weather observations, forecasts, radar, precipitation, or temperature data as a separate overlay above the MapTiler background.
+5. Render future weather observations, forecasts, radar, precipitation, or temperature data as a separate overlay above the background tiles.
 
 When changing config:
 

@@ -1,1 +1,406 @@
-{"version":8,"id":"01977b99-611a-7ac8-a22f-b9f3c6bf2546","name":"precip_map","sources":{"v3-openmaptiles":{"url":"https://api.maptiler.com/tiles/v3-openmaptiles/tiles.json?key=1KVRvvNFg31OmtTekUiz","type":"vector"}},"layers":[{"id":"Background","type":"background","layout":{"visibility":"visible"},"paint":{"background-color":"hsl(37, 18%, 80%)"}},{"id":"Ocean","type":"fill","source":"v3-openmaptiles","source-layer":"water","minzoom":0,"maxzoom":22,"layout":{"visibility":"visible"},"paint":{"fill-color":"hsl(0, 0%, 91%)"},"filter":["all",["==",["geometry-type"],"Polygon"],["match",["get","class"],["ocean"],true,false]]},{"id":"Rivers+Lakes","type":"fill","source":"v3-openmaptiles","source-layer":"water","minzoom":0,"maxzoom":22,"layout":{"visibility":"visible"},"paint":{"fill-opacity":["interpolate",["cubic-bezier",1,0,0,1],["zoom"],0,0,6,1],"fill-color":"hsl(0, 0%, 91%)"},"filter":["all",["==",["geometry-type"],"Polygon"],["match",["get","class"],["lake","river"],true,false]]},{"id":"Ocean border","type":"line","source":"v3-openmaptiles","source-layer":"water","minzoom":0,"maxzoom":22,"layout":{"visibility":"none"},"paint":{"line-color":"hsl(0, 0%, 0%)"},"filter":["all",["==",["geometry-type"],"Polygon"],["match",["get","class"],["ocean"],true,false]]},{"id":"Roads","type":"line","source":"v3-openmaptiles","source-layer":"transportation","minzoom":4,"maxzoom":22,"layout":{"visibility":"visible"},"paint":{"line-opacity":1,"line-color":["interpolate",["cubic-bezier",1,0,0,1],["zoom"],5,"hsla(37, 18%, 64%, 0)",9,"hsla(37, 18%, 64%, 0.7)"],"line-blur":0,"line-width":1},"metadata":{},"filter":["in","class","motorway","trunk","primary","secondary","tertiary","minor","service","pier"]},{"id":"Local borders","type":"line","source":"v3-openmaptiles","source-layer":"boundary","layout":{"visibility":"visible"},"paint":{"line-color":["interpolate",["cubic-bezier",1,0,0,1],["zoom"],0,"hsla(0, 0%, 60%, 0)",6,"hsl(0, 0%, 60%)"],"line-dasharray":[8,2,2,2]},"filter":["all",["all",["match",["get","admin_level"],[4],true,false],["match",["get","maritime"],[0],true,["!",["has","maritime"]]]],["==",["geometry-type"],"LineString"]]},{"id":"Country borders","type":"line","source":"v3-openmaptiles","source-layer":"boundary","minzoom":0,"maxzoom":22,"layout":{"visibility":"visible","line-cap":"butt"},"paint":{"line-gap-width":0,"line-opacity":["interpolate",["cubic-bezier",0.5,0,0.5,1],["zoom"],0,0.25,2.6,1],"line-color":"hsl(0, 0%, 60%)"},"metadata":{},"filter":["all",["==",["geometry-type"],"LineString"],["all",["match",["get","admin_level"],[2],true,false],["match",["get","maritime"],[0],true,["!",["has","maritime"]]]]]}],"glyphs":"https://api.maptiler.com/fonts/{fontstack}/{range}.pbf?key=1KVRvvNFg31OmtTekUiz","sprite":"https://api.maptiler.com/maps/01977b99-611a-7ac8-a22f-b9f3c6bf2546/sprite","bearing":0,"pitch":0,"center":[0,0],"zoom":1}
+{
+  "version": 8,
+  "name": "precip_map",
+  "sources": {
+    "v3-openmaptiles": {
+      "url": "https://tiles.openfreemap.org/planet",
+      "type": "vector"
+    }
+  },
+  "layers": [
+    {
+      "id": "Background",
+      "type": "background",
+      "layout": {
+        "visibility": "visible"
+      },
+      "paint": {
+        "background-color": "hsl(37, 18%, 80%)"
+      }
+    },
+    {
+      "id": "Ocean",
+      "type": "fill",
+      "source": "v3-openmaptiles",
+      "source-layer": "water",
+      "minzoom": 0,
+      "maxzoom": 22,
+      "layout": {
+        "visibility": "visible"
+      },
+      "paint": {
+        "fill-color": "hsl(0, 0%, 91%)"
+      },
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "geometry-type"
+          ],
+          "Polygon"
+        ],
+        [
+          "match",
+          [
+            "get",
+            "class"
+          ],
+          [
+            "ocean"
+          ],
+          true,
+          false
+        ]
+      ]
+    },
+    {
+      "id": "Rivers+Lakes",
+      "type": "fill",
+      "source": "v3-openmaptiles",
+      "source-layer": "water",
+      "minzoom": 0,
+      "maxzoom": 22,
+      "layout": {
+        "visibility": "visible"
+      },
+      "paint": {
+        "fill-opacity": [
+          "interpolate",
+          [
+            "cubic-bezier",
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            "zoom"
+          ],
+          0,
+          0,
+          6,
+          1
+        ],
+        "fill-color": "hsl(0, 0%, 91%)"
+      },
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "geometry-type"
+          ],
+          "Polygon"
+        ],
+        [
+          "match",
+          [
+            "get",
+            "class"
+          ],
+          [
+            "lake",
+            "river"
+          ],
+          true,
+          false
+        ]
+      ]
+    },
+    {
+      "id": "Ocean border",
+      "type": "line",
+      "source": "v3-openmaptiles",
+      "source-layer": "water",
+      "minzoom": 0,
+      "maxzoom": 22,
+      "layout": {
+        "visibility": "none"
+      },
+      "paint": {
+        "line-color": "hsl(0, 0%, 0%)"
+      },
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "geometry-type"
+          ],
+          "Polygon"
+        ],
+        [
+          "match",
+          [
+            "get",
+            "class"
+          ],
+          [
+            "ocean"
+          ],
+          true,
+          false
+        ]
+      ]
+    },
+    {
+      "id": "Roads",
+      "type": "line",
+      "source": "v3-openmaptiles",
+      "source-layer": "transportation",
+      "minzoom": 4,
+      "maxzoom": 22,
+      "layout": {
+        "visibility": "visible"
+      },
+      "paint": {
+        "line-opacity": 1,
+        "line-color": [
+          "interpolate",
+          [
+            "cubic-bezier",
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            "zoom"
+          ],
+          5,
+          "hsla(37, 18%, 64%, 0)",
+          9,
+          "hsla(37, 18%, 64%, 0.7)"
+        ],
+        "line-blur": 0,
+        "line-width": 1
+      },
+      "metadata": {},
+      "filter": [
+        "in",
+        "class",
+        "motorway",
+        "trunk",
+        "primary",
+        "secondary",
+        "tertiary",
+        "minor",
+        "service",
+        "pier"
+      ]
+    },
+    {
+      "id": "Local borders",
+      "type": "line",
+      "source": "v3-openmaptiles",
+      "source-layer": "boundary",
+      "layout": {
+        "visibility": "visible"
+      },
+      "paint": {
+        "line-color": [
+          "interpolate",
+          [
+            "cubic-bezier",
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            "zoom"
+          ],
+          0,
+          "hsla(0, 0%, 60%, 0)",
+          6,
+          "hsl(0, 0%, 60%)"
+        ],
+        "line-dasharray": [
+          8,
+          2,
+          2,
+          2
+        ]
+      },
+      "filter": [
+        "all",
+        [
+          "all",
+          [
+            "match",
+            [
+              "get",
+              "admin_level"
+            ],
+            [
+              4
+            ],
+            true,
+            false
+          ],
+          [
+            "match",
+            [
+              "get",
+              "maritime"
+            ],
+            [
+              0
+            ],
+            true,
+            [
+              "!",
+              [
+                "has",
+                "maritime"
+              ]
+            ]
+          ]
+        ],
+        [
+          "==",
+          [
+            "geometry-type"
+          ],
+          "LineString"
+        ]
+      ]
+    },
+    {
+      "id": "Country borders",
+      "type": "line",
+      "source": "v3-openmaptiles",
+      "source-layer": "boundary",
+      "minzoom": 0,
+      "maxzoom": 22,
+      "layout": {
+        "visibility": "visible",
+        "line-cap": "butt"
+      },
+      "paint": {
+        "line-gap-width": 0,
+        "line-opacity": [
+          "interpolate",
+          [
+            "cubic-bezier",
+            0.5,
+            0,
+            0.5,
+            1
+          ],
+          [
+            "zoom"
+          ],
+          0,
+          0.25,
+          2.6,
+          1
+        ],
+        "line-color": "hsl(0, 0%, 60%)"
+      },
+      "metadata": {},
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "geometry-type"
+          ],
+          "LineString"
+        ],
+        [
+          "all",
+          [
+            "match",
+            [
+              "get",
+              "admin_level"
+            ],
+            [
+              2
+            ],
+            true,
+            false
+          ],
+          [
+            "match",
+            [
+              "get",
+              "maritime"
+            ],
+            [
+              0
+            ],
+            true,
+            [
+              "!",
+              [
+                "has",
+                "maritime"
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "City label",
+      "type": "symbol",
+      "source": "v3-openmaptiles",
+      "source-layer": "place",
+      "layout": {
+        "text-field": "{name}",
+        "text-font": [
+          "Noto Sans Regular"
+        ],
+        "text-size": 12
+      },
+      "paint": {
+        "text-halo-color": "rgba(255, 255, 255, 1)",
+        "text-halo-width": 1,
+        "text-opacity": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          5.8,
+          0,
+          6.9,
+          0.75
+        ],
+        "icon-opacity": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          5.8,
+          0,
+          6.9,
+          0.75
+        ]
+      },
+      "filter": [
+        "==",
+        [
+          "geometry-type"
+        ],
+        "Point"
+      ]
+    }
+  ],
+  "glyphs": "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+  "bearing": 0,
+  "pitch": 0,
+  "center": [
+    0,
+    0
+  ],
+  "zoom": 1
+}
