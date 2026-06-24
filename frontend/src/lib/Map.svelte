@@ -15,6 +15,33 @@
 
 	let { location, precipitationSoon }: Props = $props();
 
+	const RADAR_METADATA_URL = 'https://api.librewxr.net/public/weather-maps.json';
+
+	interface RadarFrame {
+		time: number;
+		path: string;
+	}
+	interface WeatherMaps {
+		host: string;
+		radar: { past: RadarFrame[] };
+	}
+
+	// Latest radar frame as a MapLibre raster tile URL template, or null on failure
+	// (so the map degrades gracefully to just the precip basemap).
+	async function latestRadarTileUrl(): Promise<string | null> {
+		try {
+			const res = await fetch(RADAR_METADATA_URL);
+			if (!res.ok) return null;
+			const data: WeatherMaps = await res.json();
+			const latest = data.radar?.past?.at(-1);
+			if (!latest) return null;
+			// size=256, color scheme=8 (Dark Sky), smooth=1 (gaussian), snow=0
+			return `${data.host}${latest.path}/256/{z}/{x}/{y}/8/1_0.png`;
+		} catch {
+			return null;
+		}
+	}
+
 	function theMap(lat: number, lng: number) {
 		return (element: HTMLDivElement) => {
 			const style = (precipitationSoon
@@ -28,6 +55,26 @@
 				zoom: 6,
 				maxZoom: 19
 			});
+
+			if (precipitationSoon) {
+				map.on('load', () => {
+					latestRadarTileUrl().then((tileUrl) => {
+						if (!map || !tileUrl) return; // map torn down (cleanup nulls it) or fetch failed
+						map.addSource('librewxr-radar', {
+							type: 'raster',
+							tiles: [tileUrl],
+							tileSize: 256,
+							attribution: 'Radar © <a href="https://librewxr.net/">LibreWXR</a> (CC-BY 4.0)'
+						});
+						map.addLayer({
+							id: 'librewxr-radar',
+							type: 'raster',
+							source: 'librewxr-radar',
+							paint: { 'raster-opacity': 0.7 }
+						});
+					});
+				});
+			}
 
 			$effect(() => {
 				map?.setCenter([lng, lat]);
