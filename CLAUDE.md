@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-rainbgone is a weather app with two runtimes: a Go HTTP backend (`server/`, started by `main.go`) and a SvelteKit frontend (`frontend/`). Read `@docs/architecture.md` before changing forecast, geocoding, map, tile proxy, config, Docker, or API behavior.
+rainbgone is a weather app with two runtimes: a Go HTTP backend (`server/`, started by `main.go`) and a SvelteKit frontend (`frontend/`). Read `@docs/architecture.md` before changing forecast, geocoding, map, config, Docker, or API behavior.
 
 ## Commands
 
@@ -40,7 +40,7 @@ There are no backend tests yet. If the user asks to skip validation, state that 
 
 ## Configuration
 
-The Go backend loads `.env` with `godotenv.Read()` at package init — it will **panic** on startup if `.env` is missing or unreadable. Current keys: `PIRATE_WEATHER_KEY`, `MAPTILER_KEY`.
+The Go backend loads `.env` with `godotenv.Read()` at package init — it will **panic** on startup if `.env` is missing or unreadable. Current keys: `PIRATE_WEATHER_KEY`, and `MAPTILER_KEY` (currently unused — retained for a possible future weather/raster overlay).
 
 The SvelteKit proxy uses `API_PROXY_TARGET` and `VITE_API_PROXY_TARGET` (both default to `http://localhost:8080`).
 
@@ -70,4 +70,7 @@ Use `type: short description`. Body is optional — only include one if it adds 
 
 ## Map and Tile Changes
 
-Background/base map tiles (MapTiler) and weather/radar overlays are conceptually separate — do not mix them. MapTiler tile IDs are provider-controlled; verify URLs before hard-coding. Do not commit provider-generated style files that contain embedded API keys.
+The map uses **MapLibre GL JS** (`frontend/src/lib/Map.svelte`, lazy-loaded via `LazyMap.svelte`). The basemap is **OpenFreeMap vector tiles** (`tiles.openfreemap.org`, no API key), styled by `temp_base_style.json` / `precip_base_style.json` (Mapbox-GL style spec). There is no backend tile proxy; any future weather/radar data belongs as a separate overlay above the basemap, not mixed into it.
+
+- Do **not** put a Tailwind positioning utility (e.g. `absolute`) on MapLibre's container `<div>`. MapLibre adds a `maplibregl-map` class (`position: relative`) at equal specificity, which wins and collapses the canvas. Keep layout positioning on a parent wrapper and give MapLibre its own inner element.
+- Do not commit provider-generated style files with embedded API keys (e.g. an exported MapTiler `style.json`).

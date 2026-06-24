@@ -41,6 +41,10 @@
 	}
 </script>
 
-<div class="relative min-h-[350px] max-h-[800px] w-full bg-neutral-200 after:pt-[35%] after:block">
-  <div {@attach theMap(location.lat, location.lng)} tabindex="-1" class="absolute top-0 left-0 w-full h-full select-none"></div>
+<div class="relative max-h-[800px] min-h-[350px] w-full bg-neutral-200 after:block after:pt-[35%]">
+	<div class="absolute top-0 left-0 h-full w-full select-none">
+		<!-- MapLibre owns this inner element (it sets position:relative on it); keeping our
+		     absolute-fill positioning on the parent avoids the class conflict. -->
+		<div {@attach theMap(location.lat, location.lng)} tabindex="-1" class="h-full w-full"></div>
+	</div>
 </div>

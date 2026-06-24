@@ -25,7 +25,6 @@ Current backend routes are registered in `server/server.go`:
 | --- | --- | --- |
 | `/geocode` | `GeocodeHandler` | Convert an address into one geocoded result. |
 | `/forecast` | `ForecastHandler` | Fetch forecast data and attach a reverse-geocoded formatted address. |
-| `/map/background-tiles/` | `BackgroundTileHandler` | Proxy background/base map tile images from MapTiler. |
 
 The backend uses the standard library `net/http` package. There is no separate router framework.
 
@@ -38,7 +37,7 @@ Current backend config fields:
 | Env var | Used by | Purpose |
 | --- | --- | --- |
 | `PIRATE_WEATHER_KEY` | `server/forecast.go` | Pirate Weather API key. |
-| `MAPTILER_KEY` | `server/tileproxy.go` | MapTiler tile API key. |
+| `MAPTILER_KEY` | _(currently unused)_ | MapTiler tile API key. Retained for a possible future weather/raster overlay; the basemap now uses keyless OpenFreeMap vector tiles. |
 
 The frontend proxy target is configured separately:
 
@@ -90,34 +89,14 @@ The map component is `frontend/src/lib/Map.svelte`.
 
 Current map behavior:
 
-1. OpenLayers initializes a map with geographic coordinates.
-2. A MapTiler temperature background variant is configured at `/api/map/background-tiles/temp/{z}/{x}/{y}.png`.
-3. A MapTiler precipitation background variant is configured at `/api/map/background-tiles/precipitation/{z}/{x}/{y}.png`.
-4. OpenFreeMap style JSON supplies base geography styling (roads, borders, water, city labels).
-5. `Forecast.svelte` derives `precipitationSoon` from the next 12 hours of forecast data.
-6. `Map.svelte` shows the precipitation background variant when `precipitationSoon` is true; otherwise it shows the temperature background variant.
-7. `ol-mapbox-style` applies either `frontend/src/lib/precip_base_style.json` or `frontend/src/lib/temp_base_style.json`.
+1. `LazyMap.svelte` client-only-imports `Map.svelte` on mount (MapLibre is WebGL/`window`-dependent, and this keeps the large `maplibre-gl` bundle out of the entry chunk).
+2. MapLibre GL JS initializes a map from one of two Mapbox-GL style-spec documents: `frontend/src/lib/temp_base_style.json` or `frontend/src/lib/precip_base_style.json`.
+3. Each style draws the basemap from **OpenFreeMap** vector tiles (`tiles.openfreemap.org/planet`, no API key) — water, roads, borders, and (precip only) city labels. There is no raster background layer.
+4. `Forecast.svelte` derives `precipitationSoon` from the next 12 hours of forecast data; `Map.svelte` loads the precipitation style when it is true, otherwise the temperature style.
 
-MapTiler provides background/base map tiles in the current map. These tiles are not weather observations, forecasts, radar, precipitation data, or temperature data. Future weather data should be rendered as a separate overlay layer above the background.
+There is currently no weather/radar overlay and no map tile proxy on the backend. Future weather data (e.g. a LibreWXR radar overlay) should be rendered as a separate layer above the OpenFreeMap basemap.
 
-The backend tile proxy route currently expects:
-
-```text
-/map/background-tiles/{variant}/{z}/{x}/{y}.png
-```
-
-Supported `{variant}` values are:
-
-- `temp`
-- `precipitation`
-
-`BackgroundTileHandler` maps these to MapTiler layer IDs and fetches:
-
-```text
-https://api.maptiler.com/tiles/{layer}/{z}/{x}/{y}.png
-```
-
-Tile responses are cached in memory for five minutes.
+> Map container note: MapLibre adds a `maplibregl-map` class (`position: relative`) to its container element. Do not also put a Tailwind `absolute`/positioning utility on that same element — the classes have equal specificity and MapLibre's wins, collapsing the canvas. Keep layout positioning on a parent wrapper and give MapLibre its own inner `<div>` (see `Map.svelte`).
 
 ## External Services
 
@@ -125,10 +104,7 @@ Tile responses are cached in memory for five minutes.
 | --- | --- | --- |
 | Pirate Weather | `server/forecast.go` | Forecast source. Uses `extend=hourly`. |
 | Nominatim | `server/geocode.go` | Search and reverse geocoding. Sets `User-Agent: rainbgone/1.0`. |
-| MapTiler | `server/tileproxy.go` | Raster background tile source (temperature and precipitation variants). |
-| OpenFreeMap | map style JSON files | Vector base geography (roads, borders, water, city labels). No API key required. |
-
-MapTiler background tile IDs are provider-controlled and may change. Before changing tile proxy code, verify the provider URL, authentication parameter, tile size, zoom bounds, and response content type with a non-secret command.
+| OpenFreeMap | map style JSON files | Vector basemap tiles + glyphs (roads, borders, water, city labels). No API key required. |
 
 ## Caching
 

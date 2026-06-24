@@ -10,7 +10,6 @@ func NewMux() *http.ServeMux {
 
 	mux.HandleFunc("/geocode", GeocodeHandler)
 	mux.HandleFunc("/forecast", ForecastHandler)
-	mux.HandleFunc("/map/background-tiles/", BackgroundTileHandler)
 
 	return mux
 }
