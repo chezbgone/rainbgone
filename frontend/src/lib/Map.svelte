@@ -89,9 +89,18 @@
 </script>
 
 <div class="relative max-h-[800px] min-h-[350px] w-full bg-neutral-200 after:block after:pt-[35%]">
-	<div class="absolute top-0 left-0 h-full w-full select-none">
+	<div
+		class="group absolute top-0 left-0 h-full w-full select-none"
+		tabindex="-1"
+		onpointerdown={(e) => e.currentTarget.focus()}
+	>
 		<!-- MapLibre owns this inner element (it sets position:relative on it); keeping our
-		     absolute-fill positioning on the parent avoids the class conflict. -->
-		<div {@attach theMap(location.lat, location.lng)} tabindex="-1" class="h-full w-full"></div>
+		     absolute-fill positioning on the parent avoids the class conflict.
+		     The map starts pointer-events:none so wheel/touch pass through to the page;
+		     focusing the parent (click/tap) flips it interactive via group-focus-within. -->
+		<div
+			{@attach theMap(location.lat, location.lng)}
+			class="pointer-events-none h-full w-full group-focus-within:pointer-events-auto"
+		></div>
 	</div>
 </div>
