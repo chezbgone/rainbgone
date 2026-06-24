@@ -1,6 +1,7 @@
 <script lang="ts">
 	import maplibregl from 'maplibre-gl';
 	import 'maplibre-gl/dist/maplibre-gl.css';
+	import { env } from '$env/dynamic/public';
 
 	import temp_base_style from './temp_base_style.json';
 	import precip_base_style from './precip_base_style.json';
@@ -15,7 +16,9 @@
 
 	let { location, precipitationSoon }: Props = $props();
 
-	const RADAR_METADATA_URL = 'https://api.librewxr.net/public/weather-maps.json';
+	// LibreWXR base URL; override PUBLIC_LIBREWXR_BASE_URL to point at a self-hosted instance.
+	const LIBREWXR_BASE_URL = env.PUBLIC_LIBREWXR_BASE_URL ?? 'https://api.librewxr.net';
+	const RADAR_METADATA_URL = `${LIBREWXR_BASE_URL}/public/weather-maps.json`;
 
 	interface RadarFrame {
 		time: number;

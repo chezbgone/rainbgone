@@ -44,6 +44,8 @@ The Go backend loads `.env` with `godotenv.Read()` at package init — it will *
 
 The SvelteKit proxy uses `API_PROXY_TARGET` and `VITE_API_PROXY_TARGET` (both default to `http://localhost:8080`).
 
+`PUBLIC_LIBREWXR_BASE_URL` (read in the browser via `$env/dynamic/public`, default `https://api.librewxr.net`) sets the LibreWXR radar base URL — override it to use a self-hosted instance.
+
 Do not add, rename, or remove config keys without updating `server/config.go`, Docker config, and `docs/architecture.md`.
 
 ## Secrets
@@ -70,7 +72,9 @@ Use `type: short description`. Body is optional — only include one if it adds 
 
 ## Map and Tile Changes
 
-The map uses **MapLibre GL JS** (`frontend/src/lib/Map.svelte`, lazy-loaded via `LazyMap.svelte`). The basemap is **OpenFreeMap vector tiles** (`tiles.openfreemap.org`, no API key), styled by `temp_base_style.json` / `precip_base_style.json` (Mapbox-GL style spec). There is no backend tile proxy; any future weather/radar data belongs as a separate overlay above the basemap, not mixed into it.
+The map uses **MapLibre GL JS** (`frontend/src/lib/Map.svelte`, lazy-loaded via `LazyMap.svelte`). The basemap is **OpenFreeMap vector tiles** (`tiles.openfreemap.org`, no API key), styled by `temp_base_style.json` / `precip_base_style.json` (Mapbox-GL style spec). There is no backend tile proxy.
 
+- **Radar overlay:** when `precipitationSoon` is true, `Map.svelte` adds a **LibreWXR** radar layer at runtime via `addSource`/`addLayer` (never in the style JSON). Frames come from `PUBLIC_LIBREWXR_BASE_URL` (default `https://api.librewxr.net`, no key, CC-BY — keep the source attribution). Keep weather data as a separate overlay, not mixed into the basemap.
+- **Interaction gating:** the map starts `pointer-events: none` and only goes interactive while its focusable parent is focused (`group-focus-within:pointer-events-auto`), so hovering doesn't hijack page scroll. Preserve this and the `onpointerdown` focus shim (iOS) if you restructure the markup.
 - Do **not** put a Tailwind positioning utility (e.g. `absolute`) on MapLibre's container `<div>`. MapLibre adds a `maplibregl-map` class (`position: relative`) at equal specificity, which wins and collapses the canvas. Keep layout positioning on a parent wrapper and give MapLibre its own inner element.
 - Do not commit provider-generated style files with embedded API keys (e.g. an exported MapTiler `style.json`).

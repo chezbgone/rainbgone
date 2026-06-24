@@ -1,6 +1,6 @@
 # Architecture
 
-rainbgone is a weather forecast app with a Go HTTP backend and a SvelteKit frontend. The backend owns external weather, geocoding, and background tile provider calls. The frontend renders forecast pages and maps, and it reaches the backend through an `/api` proxy.
+rainbgone is a weather forecast app with a Go HTTP backend and a SvelteKit frontend. The backend handles weather and geocoding provider calls, reached via an `/api` proxy; the frontend also calls some providers directly from the browser (e.g. the LibreWXR radar overlay).
 
 ## Runtime Layout
 
@@ -44,10 +44,9 @@ The frontend proxy target is configured separately:
 | --- | --- | --- |
 | `API_PROXY_TARGET` | `frontend/src/hooks.server.ts` | Runtime SvelteKit server proxy target. |
 | `VITE_API_PROXY_TARGET` | `frontend/src/hooks.server.ts`, `frontend/vite.config.ts` | Runtime and Vite dev proxy target. |
+| `PUBLIC_LIBREWXR_BASE_URL` | `frontend/src/lib/Map.svelte` | LibreWXR radar base URL. Public (`$env/dynamic/public`), read in the browser. Defaults to `https://api.librewxr.net`; override to use a self-hosted instance. |
 
 Both frontend proxy variables default to `http://localhost:8080`.
-
-`WEATHER_RADAR_BASE_URL` may exist in local environments, but the current code does not read it.
 
 ## Forecast Flow
 
@@ -82,6 +81,8 @@ Daily details live under `frontend/src/routes/details/[lat=number],[lng=number]/
 
 The server load fetches the same `/api/forecast` response as the main forecast page, finds the requested daily forecast by local date, filters hourly entries for that date, and returns previous/next detail links when adjacent days exist.
 
+This load returns the address as a bare `formattedAddress` and does **not** populate `geocode`. The root `+layout.svelte` therefore reads `page.data.geocode?.formatted_address` with optional chaining — pages that omit `geocode` (details, error pages) would otherwise crash the layout.
+
 ## Map Flow
 
 The map component is `frontend/src/lib/Map.svelte`.
@@ -92,8 +93,9 @@ Current map behavior:
 2. MapLibre GL JS initializes a map from one of two Mapbox-GL style-spec documents: `frontend/src/lib/temp_base_style.json` or `frontend/src/lib/precip_base_style.json`.
 3. Each style draws the basemap from **OpenFreeMap** vector tiles (`tiles.openfreemap.org/planet`, no API key) — water, roads, borders, and (precip only) city labels. There is no raster background layer.
 4. `Forecast.svelte` derives `precipitationSoon` from the next 12 hours of forecast data; `Map.svelte` loads the precipitation style when it is true, otherwise the temperature style.
+5. When `precipitationSoon` is true, `Map.svelte` adds a **LibreWXR** radar overlay on the map `load` event: it fetches the latest frame from `{PUBLIC_LIBREWXR_BASE_URL}/public/weather-maps.json` (default `https://api.librewxr.net`, Dark Sky color scheme) and adds it as a raster source + layer via `addSource`/`addLayer` — at runtime, never in the style JSON, and with no backend tile proxy. The tile host comes from the metadata response, so `PUBLIC_LIBREWXR_BASE_URL` redirects both metadata and tiles to a self-hosted instance. The fetch returns `null` on failure (map degrades to just the basemap); no key, CC-BY (source carries an attribution string).
 
-There is currently no weather/radar overlay and no map tile proxy on the backend. Future weather data (e.g. a LibreWXR radar overlay) should be rendered as a separate layer above the OpenFreeMap basemap.
+The map is **non-interactive until clicked**: the container starts `pointer-events: none` (wheel/touch pass through to the page), and a focusable parent (`group`, `tabindex="-1"`, with an `onpointerdown` focus shim for iOS) flips it to `auto` via `group-focus-within` while focused. Clicking out reverts it.
 
 > Map container note: MapLibre adds a `maplibregl-map` class (`position: relative`) to its container element. Do not also put a Tailwind `absolute`/positioning utility on that same element — the classes have equal specificity and MapLibre's wins, collapsing the canvas. Keep layout positioning on a parent wrapper and give MapLibre its own inner `<div>` (see `Map.svelte`).
 
@@ -104,6 +106,7 @@ There is currently no weather/radar overlay and no map tile proxy on the backend
 | Pirate Weather | `server/forecast.go` | Forecast source. Uses `extend=hourly`. |
 | Nominatim | `server/geocode.go` | Search and reverse geocoding. Sets `User-Agent: rainbgone/1.0`. |
 | OpenFreeMap | map style JSON files | Vector basemap tiles + glyphs (roads, borders, water, city labels). No API key required. |
+| LibreWXR | `frontend/src/lib/Map.svelte` | Radar overlay (RainViewer-compatible). Public `api.librewxr.net`, no API key, CC-BY (attribution required). Only loaded when `precipitationSoon` is true. |
 
 ## Caching
 

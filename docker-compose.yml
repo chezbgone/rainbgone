@@ -18,6 +18,8 @@ services:
     environment:
       API_PROXY_TARGET: http://backend:8080
       VITE_API_PROXY_TARGET: http://backend:8080
+      # Override to point the radar overlay at a self-hosted LibreWXR instance.
+      PUBLIC_LIBREWXR_BASE_URL: https://api.librewxr.net
     ports:
       - "3000:3000"
 
