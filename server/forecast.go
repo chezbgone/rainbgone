@@ -34,7 +34,7 @@ func getForecast(lat, lon float64) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error fetching weather data: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -60,14 +60,12 @@ func ForecastHandler(w http.ResponseWriter, r *http.Request) {
 
 	lat, err := strconv.ParseFloat(params.Get("lat"), 64)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "Invalid latitude: %v", err)
+		http.Error(w, fmt.Sprintf("Invalid latitude: %v", err), http.StatusBadRequest)
 		return
 	}
 	lng, err := strconv.ParseFloat(params.Get("lng"), 64)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "Invalid longitude: %v", err)
+		http.Error(w, fmt.Sprintf("Invalid longitude: %v", err), http.StatusBadRequest)
 		return
 	}
 
@@ -91,23 +89,20 @@ func ForecastHandler(w http.ResponseWriter, r *http.Request) {
 
 	forecastResp := <-forecastCh
 	if forecastResp.err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "Error fetching weather data: %v", forecastResp.err)
+		http.Error(w, fmt.Sprintf("Error fetching weather data: %v", forecastResp.err), http.StatusInternalServerError)
 		return
 	}
 
 	geocodeResp := <-geocodeCh
 	if geocodeResp.err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "%v", geocodeResp.err)
+		http.Error(w, fmt.Sprintf("%v", geocodeResp.err), http.StatusBadRequest)
 		return
 	}
 
 	var forecastMap map[string]interface{}
 	err = json.Unmarshal(forecastResp.body, &forecastMap)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "Error parsing weather data: %v", err)
+		http.Error(w, fmt.Sprintf("Error parsing weather data: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -115,11 +110,10 @@ func ForecastHandler(w http.ResponseWriter, r *http.Request) {
 
 	responseBytes, err := json.Marshal(forecastMap)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "Error generating response: %v", err)
+		http.Error(w, fmt.Sprintf("Error generating response: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(responseBytes)
+	_, _ = w.Write(responseBytes)
 }

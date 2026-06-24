@@ -76,7 +76,7 @@ func geocode(address string) (*GeocodeResponse, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error geocoding address: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -142,7 +142,7 @@ func reverseGeocode(lat, lng float64) (*GeocodeResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error reverse geocoding: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -201,11 +201,10 @@ func GeocodeHandler(w http.ResponseWriter, r *http.Request) {
 	address := params.Get("address")
 	geocodeResp, err := geocode_one(address)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "%v", err)
+		http.Error(w, fmt.Sprintf("%v", err), http.StatusBadRequest)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(geocodeResp)
+	_ = json.NewEncoder(w).Encode(geocodeResp)
 }
