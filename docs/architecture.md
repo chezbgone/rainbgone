@@ -37,7 +37,6 @@ Current backend config fields:
 | Env var | Used by | Purpose |
 | --- | --- | --- |
 | `PIRATE_WEATHER_KEY` | `server/forecast.go` | Pirate Weather API key. |
-| `MAPTILER_KEY` | _(currently unused)_ | MapTiler tile API key. Retained for a possible future weather/raster overlay; the basemap now uses keyless OpenFreeMap vector tiles. |
 
 The frontend proxy target is configured separately:
 

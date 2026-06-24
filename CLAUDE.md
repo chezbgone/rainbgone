@@ -40,7 +40,7 @@ There are no backend tests yet. If the user asks to skip validation, state that 
 
 ## Configuration
 
-The Go backend loads `.env` with `godotenv.Read()` at package init — it will **panic** on startup if `.env` is missing or unreadable. Current keys: `PIRATE_WEATHER_KEY`, and `MAPTILER_KEY` (currently unused — retained for a possible future weather/raster overlay).
+The Go backend loads `.env` with `godotenv.Read()` at package init — it will **panic** on startup if `.env` is missing or unreadable. Current keys: `PIRATE_WEATHER_KEY`.
 
 The SvelteKit proxy uses `API_PROXY_TARGET` and `VITE_API_PROXY_TARGET` (both default to `http://localhost:8080`).
 

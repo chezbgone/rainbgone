@@ -4,7 +4,6 @@ import "github.com/joho/godotenv"
 
 type config struct {
 	pirateWeatherKey string
-	mapTilerKey      string
 }
 
 var appConfig = loadConfig()
@@ -17,6 +16,5 @@ func loadConfig() config {
 
 	return config{
 		pirateWeatherKey: env["PIRATE_WEATHER_KEY"],
-		mapTilerKey:      env["MAPTILER_KEY"],
 	}
 }
