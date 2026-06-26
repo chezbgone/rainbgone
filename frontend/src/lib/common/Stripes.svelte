@@ -28,7 +28,8 @@
 			// @ts-ignore: null will be overwritten
 			weather: null
 		};
-		for (let hour of hours) {
+		// The last entry is the closing boundary tick, not a full hour period.
+		for (let hour of hours.slice(0, -1)) {
 			let weather = classifyWeather(hour.precipIntensity, hour.precipType, hour.cloudCover);
 			if (current_stripe.weather === null || weather !== current_stripe.weather) {
 				if (current_stripe.weather !== null) {
@@ -71,7 +72,7 @@
 
 		<!-- ticks -->
 		<div class="mt-1 flex w-full justify-between">
-			{#each Array(25) as _}
+			{#each Array(ticks.length) as _}
 				<span class="border-l border-neutral-400 odd:h-2 even:h-1"></span>
 			{/each}
 		</div>

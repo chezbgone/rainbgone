@@ -107,6 +107,11 @@ export interface Forecast {
 			feelsLike?: number;
 		}[];
 	};
+	// Flat hourly series anchored at today's local midnight (today's elapsed hours are
+	// backfilled by the backend via the Time Machine API). Use this for per-day stripes
+	// via contiguous 24-hour slices, instead of `hourly`, whose series starts at the
+	// current hour.
+	hourlyFromMidnight: Forecast['hourly']['data'];
 	daily: {
 		summary: string;
 		icon: string;

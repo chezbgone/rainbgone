@@ -56,12 +56,13 @@ The main forecast page is `frontend/src/routes/[lat=number],[lng=number]/+page.s
 2. The SvelteKit server load fetches `/api/forecast?lat=...&lng=...`.
 3. `frontend/src/hooks.server.ts` proxies `/api/forecast` to the Go backend `/forecast`.
 4. `ForecastHandler` parses `lat` and `lng`.
-5. `ForecastHandler` starts the Pirate Weather forecast request and Nominatim reverse geocode request concurrently.
+5. `ForecastHandler` starts three requests concurrently: the Pirate Weather forecast, the Nominatim reverse geocode, and a Pirate Weather **Time Machine** request (`timemachine.pirateweather.net`) for the current instant.
 6. The Pirate Weather response body is unmarshaled into a map.
 7. The reverse geocode result is added as `formatted_address`.
-8. The merged JSON response is returned to the frontend.
+8. An `hourlyFromMidnight` field is added: a flat hourly series anchored at today's local midnight. The regular forecast's hourly series starts at the *current hour*, so today's already-elapsed hours are prepended from the Time Machine response (which returns the full local day). The seam is a plain timestamp threshold — Time Machine hours earlier than the forecast's first (current) hour, then all regular forecast hours — so only today's past morning comes from the GFS-only Time Machine; everything the standard multi-model forecast covers is kept from it. Per-day timelines are then contiguous 25-point slices (`slice(i*24, i*24+25)`, the `+1` carrying the closing midnight). The original `hourly` series is left untouched (the radar trigger and the "next 24h" strip depend on it starting at now). The Time Machine call is best-effort — on failure the series simply starts at the current hour.
+9. The merged JSON response is returned to the frontend.
 
-Forecast responses are cached in memory by latitude and longitude for one minute.
+Forecast and Time Machine responses are cached in memory by latitude and longitude for one minute.
 
 ## Geocoding Flow
 
@@ -79,7 +80,7 @@ Reverse geocoding happens inside the forecast route so coordinate-based pages ca
 
 Daily details live under `frontend/src/routes/details/[lat=number],[lng=number]/[date]/`.
 
-The server load fetches the same `/api/forecast` response as the main forecast page, finds the requested daily forecast by local date, filters hourly entries for that date, and returns previous/next detail links when adjacent days exist.
+The server load fetches the same `/api/forecast` response as the main forecast page, finds the requested daily forecast by local date, takes that day's midnight-to-midnight hourly entries as a contiguous slice of `hourlyFromMidnight` (`slice(dayIndex*24, dayIndex*24+25)`), and returns previous/next detail links when adjacent days exist.
 
 This load returns the address as a bare `formattedAddress` and does **not** populate `geocode`. The root `+layout.svelte` therefore reads `page.data.geocode?.formatted_address` with optional chaining — pages that omit `geocode` (details, error pages) would otherwise crash the layout.
 
@@ -103,7 +104,7 @@ The map is **non-interactive until clicked**: the container starts `pointer-even
 
 | Service | Code | Notes |
 | --- | --- | --- |
-| Pirate Weather | `server/forecast.go` | Forecast source. Uses `extend=hourly`. |
+| Pirate Weather | `server/forecast.go` | Forecast source. Uses `extend=hourly`. Also calls the Time Machine endpoint (`timemachine.pirateweather.net`) to backfill today's elapsed hours for `hourlyFromMidnight`. Both use `PIRATE_WEATHER_KEY`. |
 | Nominatim | `server/geocode.go` | Search and reverse geocoding. Sets `User-Agent: rainbgone/1.0`. |
 | OpenFreeMap | map style JSON files | Vector basemap tiles + glyphs (roads, borders, water, city labels). No API key required. |
 | LibreWXR | `frontend/src/lib/Map.svelte` | Radar overlay (RainViewer-compatible). Public `api.librewxr.net`, no API key, CC-BY (attribution required). Only loaded when `precipitationSoon` is true. |
@@ -115,6 +116,7 @@ All caches use `server/cache.go`.
 | Cache | Key | TTL |
 | --- | --- | --- |
 | Forecast | `lat,lng` | 1 minute |
+| Time Machine | `lat,lng` | 1 minute |
 | Reverse geocode | `lat,lng` | 24 hours |
 | Background tiles | `variant/z/x/y` | 5 minutes |
 

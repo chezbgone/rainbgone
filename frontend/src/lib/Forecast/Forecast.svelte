@@ -34,7 +34,7 @@
 <LazyMap location={geocode.geometry.location} {precipitationSoon} />
 <Daily
 	daily={forecast.daily}
-	hourly={forecast.hourly}
+	hourlyFromMidnight={forecast.hourlyFromMidnight}
 	lat={geocode.geometry.location.lat}
 	lng={geocode.geometry.location.lng}
 	timezone={forecast.timezone}

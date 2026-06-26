@@ -27,9 +27,11 @@ export const load = (async ({ fetch, params }) => {
 	}
 
 	const day = days[dayIndex];
-	const hourly = forecast.hourly.data.filter(
-		(hour) => formatDateKey(hour.time, forecast.timezone) === date
-	);
+	// The day's hourly entries, midnight to midnight (plus the closing midnight as the
+	// 25th point). The backend's `hourlyFromMidnight` is a flat series anchored at today's
+	// midnight (today backfilled via the Time Machine API), so each day is a contiguous
+	// 24-hour slice; the +1 includes the next midnight for the closing tick/label.
+	const hourly = forecast.hourlyFromMidnight.slice(dayIndex * 24, dayIndex * 24 + 25);
 	const previousDay = days[dayIndex - 1];
 	const nextDay = days[dayIndex + 1];
 

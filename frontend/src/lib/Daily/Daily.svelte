@@ -4,22 +4,15 @@
 
 	interface Props {
 		daily: Forecast['daily'];
-		hourly: Forecast['hourly'];
+		hourlyFromMidnight: Forecast['hourlyFromMidnight'];
 		lat: number;
 		lng: number;
 		timezone: string;
 	}
 
-	let { daily, hourly, lat, lng, timezone }: Props = $props();
+	let { daily, hourlyFromMidnight, lat, lng, timezone }: Props = $props();
 
 	const days = $derived(daily.data);
-	const daysHourly = $derived.by(() => {
-		const weekHours = [];
-		for (let d = 0; d < 7; ++d) {
-			weekHours.push(hourly.data.slice(d * 24, (d + 1) * 24 + 1));
-		}
-		return weekHours;
-	});
 
 	const minTemp = $derived(Math.min(...days.map((d) => d.temperatureMin)));
 	const maxTemp = $derived(Math.max(...days.map((d) => d.temperatureMax)));
@@ -34,7 +27,7 @@
 				daily={day}
 				{minTemp}
 				{maxTemp}
-				hourly={daysHourly[i]}
+				hourly={hourlyFromMidnight.slice(i * 24, i * 24 + 25)}
 				{lat}
 				{lng}
 				{timezone}

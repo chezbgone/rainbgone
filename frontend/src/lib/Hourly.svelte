@@ -7,7 +7,7 @@
 	}
 
 	let { hourly }: Props = $props();
-	const hours = $derived(hourly.data.slice(0, 24));
+	const hours = $derived(hourly.data.slice(0, 25));
 </script>
 
 <Stripes {hours} />
