@@ -23,7 +23,7 @@
 	const clamp = (value: number, min = 0, max = 1) => Math.min(Math.max(value, min), max);
 
 	const transformIntensity = (rawIntensity: number) => {
-		const mediumIntensity = 1/3;
+		const mediumIntensity = 1 / 3;
 		const transformed = 1 - Math.exp(-2.209389806 * Math.sqrt(rawIntensity));
 
 		if (transformed <= 0.5) {
@@ -130,9 +130,11 @@
 				<div class="relative h-[120px] w-[350px]">
 					<canvas bind:this={canvas} {width} {height} class="block h-[120px] w-[350px]"></canvas>
 					<div class="pointer-events-none absolute inset-x-0 top-0 h-full">
-            {#each Array(3) as _}
-              <div class="h-[33.333333%] not-last:border-b border-r border-dashed border-neutral-400"></div>
-            {/each}
+						{#each Array(3) as _}
+							<div
+								class="h-[33.333333%] border-r border-dashed border-neutral-400 not-last:border-b"
+							></div>
+						{/each}
 					</div>
 				</div>
 
