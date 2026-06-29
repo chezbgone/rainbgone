@@ -6,8 +6,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - .:/app
-      - go-cache:/go/pkg/mod
+      - ./.env:/app/.env:ro
 
   frontend:
     build:
@@ -26,8 +25,6 @@ services:
     volumes:
       - ./frontend:/app
       - frontend-node-modules:/app/node_modules
-    command: npm run dev -- --host 0.0.0.0
 
 volumes:
-  go-cache:
   frontend-node-modules:

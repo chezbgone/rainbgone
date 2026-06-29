@@ -1,0 +1,26 @@
+# Clean production base.
+# The frontend (SvelteKit/adapter-node) proxies /api -> backend internally,
+# so both services share an `appnet` network and NO host ports are published.
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./.env:/app/.env:ro
+    networks: [appnet]
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    depends_on: [backend]
+    environment:
+      API_PROXY_TARGET: http://backend:8080
+      PUBLIC_LIBREWXR_BASE_URL: https://api.librewxr.net
+    networks: [appnet]
+    restart: unless-stopped
+
+networks:
+  appnet:

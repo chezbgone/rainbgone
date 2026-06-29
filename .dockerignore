@@ -6,4 +6,4 @@ frontend
 node_modules
 npm-debug.log*
 Dockerfile*
-docker-compose*.yml
+compose*.yaml

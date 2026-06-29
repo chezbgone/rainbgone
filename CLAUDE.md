@@ -25,7 +25,7 @@ npm run build
 
 Full dev stack (both services):
 ```sh
-docker compose -f docker-compose.dev.yml up --build
+docker compose -f compose.dev.yaml up --build
 ```
 
 ## Validation

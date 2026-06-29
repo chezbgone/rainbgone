@@ -11,8 +11,8 @@ rainbgone is a weather forecast app with a Go HTTP backend and a SvelteKit front
 ├── frontend/                # SvelteKit app
 ├── Dockerfile               # Backend production image
 ├── frontend/Dockerfile      # Frontend dev/build/production image
-├── docker-compose.dev.yml   # Local two-service development stack
-└── docker-compose.yml       # Production-style two-service stack
+├── compose.dev.yaml         # Local two-service development stack
+└── compose.prod.yaml        # Production two-service stack (internal network, behind reverse proxy)
 ```
 
 ## Backend
@@ -43,7 +43,7 @@ The frontend proxy target is configured separately:
 | Env var | Used by | Purpose |
 | --- | --- | --- |
 | `API_PROXY_TARGET` | `frontend/src/hooks.server.ts` | Runtime SvelteKit server proxy target. |
-| `VITE_API_PROXY_TARGET` | `frontend/src/hooks.server.ts`, `frontend/vite.config.ts` | Runtime and Vite dev proxy target. |
+| `VITE_API_PROXY_TARGET` | `frontend/vite.config.ts` | Vite dev server proxy target (dev only). |
 | `PUBLIC_LIBREWXR_BASE_URL` | `frontend/src/lib/Map.svelte` | LibreWXR radar base URL. Public (`$env/dynamic/public`), read in the browser. Defaults to `https://api.librewxr.net`; override to use a self-hosted instance. |
 
 Both frontend proxy variables default to `http://localhost:8080`.
@@ -156,17 +156,17 @@ http://localhost:8080/forecast?lat=47.6062&lng=-122.3321
 
 Development compose file:
 
-- `docker-compose.dev.yml`
+- `compose.dev.yaml`
 - Backend exposes `8080`.
 - Frontend exposes Vite on `5173`.
 - Frontend proxy target points at `http://backend:8080`.
 
-Production-style compose file:
+Production compose file:
 
-- `docker-compose.yml`
-- Backend exposes `8080`.
-- Frontend exposes Node adapter output on `3000`.
-- Frontend proxy target points at `http://backend:8080`.
+- `compose.prod.yaml`
+- Services share an internal Docker network (`appnet`); no host ports are published.
+- Intended to run behind a reverse proxy that handles ingress (e.g. bind `127.0.0.1:3000:3000` or attach the proxy to `appnet`).
+- Frontend proxy target points at `http://backend:8080` via `API_PROXY_TARGET`.
 
 ## Change Guidance
 
