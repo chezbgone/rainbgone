@@ -167,6 +167,13 @@ Production compose file:
 - Services share an internal Docker network (`appnet`); no host ports are published.
 - Intended to run behind a reverse proxy that handles ingress (e.g. bind `127.0.0.1:3000:3000` or attach the proxy to `appnet`).
 - Frontend proxy target points at `http://backend:8080` via `API_PROXY_TARGET`.
+- References pre-built images (`image:`) rather than building on the host — see deployment below.
+
+Production deployment (pull-and-run, no on-host build):
+
+- `.github/workflows/deploy.yml` is manually triggered (`workflow_dispatch`) — run it deliberately when you want to ship a new image. It builds both images for `linux/arm64` and pushes to public GHCR packages `ghcr.io/chezbgone/rainbgone-backend` and `ghcr.io/chezbgone/rainbgone-frontend` (tags `latest` + commit SHA).
+- The production host (an arm64 EC2 nano) only runs `docker compose -f compose.prod.yaml pull && up -d`; it never compiles, which avoids OOM on its 512 MB RAM. Local development still builds from source via `compose.dev.yaml`.
+- Secrets are not baked into images: `.env` is `.dockerignore`d and the backend reads it at runtime via the `./.env` bind-mount; frontend config is injected at runtime through compose `environment:`. The GHCR packages can therefore be public.
 
 ## Change Guidance
 

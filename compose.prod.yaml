@@ -3,18 +3,14 @@
 # so both services share an `appnet` network and NO host ports are published.
 services:
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/chezbgone/rainbgone-backend:latest
     volumes:
       - ./.env:/app/.env:ro
     networks: [appnet]
     restart: unless-stopped
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: ghcr.io/chezbgone/rainbgone-frontend:latest
     depends_on: [backend]
     environment:
       API_PROXY_TARGET: http://backend:8080
