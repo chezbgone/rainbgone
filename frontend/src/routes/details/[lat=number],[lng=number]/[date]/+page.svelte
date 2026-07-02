@@ -35,16 +35,16 @@
 		return 'bg-[rgba(64,191,64,0.6)]';
 	};
 
-	const precipType = data.day.precipType;
-	const hasPrecip = precipType !== 'none';
+	const precipType = $derived(data.day.precipType);
+	const hasPrecip = $derived(precipType !== 'none');
 
-	const details = [
+	const details = $derived([
 		{ label: 'Precip', value: percent(data.day.precipProbability) },
 		{ label: 'Pressure', value: `${number(data.day.pressure, 1)} mb` },
 		{ label: 'Humidity', value: percent(data.day.humidity) },
 		{ label: 'Dew Pt', value: `${number(data.day.dewPoint)}°` },
 		{ label: 'Visibility', value: `${number(data.day.visibility, 1)} mi` }
-	];
+	]);
 </script>
 
 <main class="mx-auto max-w-[800px] px-4 pb-12 text-neutral-800">
