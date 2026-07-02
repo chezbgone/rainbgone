@@ -7,6 +7,22 @@ export const formatUnixTime = (time: number) =>
 		.replace(' ', '')
 		.toLowerCase();
 
+export const formatWeekdayDate = (time: number, timeZone?: string) =>
+	new Intl.DateTimeFormat(undefined, {
+		timeZone,
+		weekday: 'long',
+		month: 'long',
+		day: 'numeric',
+		year: 'numeric'
+	}).format(time * 1000);
+
+export const formatHourMinute = (time: number, timeZone?: string) =>
+	new Intl.DateTimeFormat(undefined, {
+		timeZone,
+		hour: 'numeric',
+		minute: '2-digit'
+	}).format(time * 1000);
+
 export const formatDateKey = (time: number, timeZone?: string) => {
 	const parts = new Intl.DateTimeFormat('en-US', {
 		timeZone,

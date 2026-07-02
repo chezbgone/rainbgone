@@ -114,6 +114,15 @@ export const weatherInfo: Record<Weather, WeatherInfo> = {
 	}
 };
 
+// UV chip color, matching Dark Sky's uv0–uv4 buckets.
+export const uvLevel = (uv: number) => {
+	if (uv >= 11) return 'bg-[rgba(166,89,255,0.75)]';
+	if (uv >= 8) return 'bg-[rgba(255,0,0,0.6)]';
+	if (uv >= 6) return 'bg-[rgba(255,127,0,0.5)]';
+	if (uv >= 3) return 'bg-[rgba(255,240,0,0.6)]';
+	return 'bg-[rgba(64,191,64,0.6)]';
+};
+
 export const classifyWeather = (
 	precipIntensity: number,
 	precipType: 'rain' | 'snow' | 'sleet' | 'none',

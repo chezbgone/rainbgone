@@ -183,3 +183,5 @@ export interface Forecast {
 		processTime?: number;
 	};
 }
+
+export type DailyDatum = Forecast['daily']['data'][number];
