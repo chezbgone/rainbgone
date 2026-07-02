@@ -30,8 +30,17 @@ export const load = (async ({ fetch, params }) => {
 	// The day's hourly entries, midnight to midnight (plus the closing midnight as the
 	// 25th point). The backend's `hourlyFromMidnight` is a flat series anchored at today's
 	// midnight (today backfilled via the Time Machine API), so each day is a contiguous
-	// 24-hour slice; the +1 includes the next midnight for the closing tick/label.
-	const hourly = forecast.hourlyFromMidnight.slice(dayIndex * 24, dayIndex * 24 + 25);
+	// 24-hour slice; the +1 includes the next midnight for the closing tick/label that
+	// Stripes needs to draw the day's last hour.
+	const start = dayIndex * 24;
+	const hourly = forecast.hourlyFromMidnight.slice(start, start + 25);
+	// The final covered day has no next hour in the series, so the slice above comes up
+	// short of 25 entries and lacks that closing tick, which would make Stripes drop the
+	// day's last real hour. Synthesize the boundary from the last hour instead.
+	if (hourly.length > 0 && hourly.length < 25) {
+		const last = hourly[hourly.length - 1];
+		hourly.push({ ...last, time: last.time + 3600 });
+	}
 	const previousDay = days[dayIndex - 1];
 	const nextDay = days[dayIndex + 1];
 
