@@ -18,25 +18,25 @@
 	<!-- High / low temperature -->
 	<div class="flex items-end">
 		<span class="flex items-baseline gap-1">
-			<span class="text-2xl font-medium">{Math.round(day.temperatureMax)}°</span>
-			<span class="text-sm">{formatHourMinute(day.temperatureMaxTime, timezone)}</span>
+			<span class="text-2xl font-medium">{Math.round(day.temperatureMin)}°</span>
+			<span class="text-sm">{formatHourMinute(day.temperatureMinTime, timezone)}</span>
 		</span>
 		<span class="mx-1 text-xl">→</span>
 		<span class="flex items-baseline gap-1">
-			<span class="text-2xl font-medium">{Math.round(day.temperatureMin)}°</span>
-			<span class="text-sm">{formatHourMinute(day.temperatureMinTime, timezone)}</span>
+			<span class="text-2xl font-medium">{Math.round(day.temperatureMax)}°</span>
+			<span class="text-sm">{formatHourMinute(day.temperatureMaxTime, timezone)}</span>
 		</span>
 	</div>
 
 	<!-- Sun times -->
 	<div class="flex items-center gap-4">
-		<span class="flex items-center gap-1">
+		<span class="flex items-baseline gap-1">
 			<img src="/sunrise.png" width="28" height="30" alt="Sunrise" />
-			{formatHourMinute(day.sunriseTime, timezone)}
+			<span>{formatHourMinute(day.sunriseTime, timezone)}</span>
 		</span>
-		<span class="flex items-center gap-1">
+		<span class="flex items-baseline gap-1">
 			<img src="/sunset.png" width="28" height="30" alt="Sunset" />
-			{formatHourMinute(day.sunsetTime, timezone)}
+			<span>{formatHourMinute(day.sunsetTime, timezone)}</span>
 		</span>
 	</div>
 

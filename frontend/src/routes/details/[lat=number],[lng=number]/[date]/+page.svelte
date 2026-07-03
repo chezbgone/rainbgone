@@ -2,7 +2,9 @@
 	import Stripes from '$lib/common/Stripes.svelte';
 	import DayNavigation from '$lib/Details/DayNavigation.svelte';
 	import DayHighlights from '$lib/Details/DayHighlights.svelte';
-	import DayDetails from '$lib/Details/DayDetails.svelte';
+	import InstantDetails from '$lib/Details/InstantDetails.svelte';
+	import HourlyCharts from '$lib/Details/Charts/HourlyCharts.svelte';
+	import Scrubber from '$lib/Details/Scrubber.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -16,12 +18,16 @@
 	<DayHighlights day={data.day} timezone={data.timezone} />
 
 	{#if data.hourly.length > 0}
-		<Stripes hours={data.hourly} />
+		<Scrubber hours={data.hourly}>
+			{#snippet children(hour)}
+				<Stripes hours={data.hourly} />
+				<InstantDetails hours={data.hourly} {hour} />
+				<HourlyCharts hours={data.hourly} />
+			{/snippet}
+		</Scrubber>
 	{:else}
 		<p class="mt-6 text-center text-neutral-500">
 			No hourly forecast data is available for this day.
 		</p>
 	{/if}
-
-	<DayDetails day={data.day} />
 </main>
