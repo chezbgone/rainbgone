@@ -158,8 +158,14 @@ Development compose file:
 
 - `compose.dev.yaml`
 - Backend exposes `8080`.
+- Backend runs `go run .` (targeting the Dockerfile's `builder` stage) against the repo
+  bind-mounted at `/src`, recompiling from current source on every container start —
+  parallel to the frontend's `npm ci` on start (below). Without this, backend source
+  changes are silently ignored until an explicit `--build`.
 - Frontend exposes Vite on `5173`.
 - Frontend proxy target points at `http://backend:8080`.
+- Frontend container runs `npm ci` before `vite dev` on every start, since its
+  `frontend-node-modules` named volume only gets seeded from the image on first creation.
 
 Production compose file:
 
@@ -173,7 +179,7 @@ Production deployment (pull-and-run, no on-host build):
 
 - `.github/workflows/deploy.yml` is manually triggered (`workflow_dispatch`) — run it deliberately when you want to ship a new image. It builds both images for `linux/arm64` and pushes to public GHCR packages `ghcr.io/chezbgone/rainbgone-backend` and `ghcr.io/chezbgone/rainbgone-frontend` (tags `latest` + commit SHA).
 - The production host (an arm64 EC2 nano) only runs `docker compose -f compose.prod.yaml pull && up -d`; it never compiles, which avoids OOM on its 512 MB RAM. Local development still builds from source via `compose.dev.yaml`.
-- Secrets are not baked into images: `.env` is `.dockerignore`d and the backend reads it at runtime via the `./.env` bind-mount; frontend config is injected at runtime through compose `environment:`. The GHCR packages can therefore be public.
+- Secrets are not baked into images: `.env` is `.dockerignore`d. In production the backend reads it at runtime via the `./.env` bind-mount (`compose.prod.yaml`); in development it arrives as part of the full-repo bind-mount at `/src` (`compose.dev.yaml`). Frontend config is injected at runtime through compose `environment:`. The GHCR packages can therefore be public.
 
 ## Change Guidance
 

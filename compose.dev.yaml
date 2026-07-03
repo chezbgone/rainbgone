@@ -3,10 +3,20 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      # Reuse the builder stage (Go toolchain + downloaded modules) instead of the final
+      # distroless image, so the compose command below can compile from live source.
+      target: builder
+    # Recompile from the bind-mounted source on every container start (parallel to the
+    # frontend's `npm ci` on start, see frontend/Dockerfile). Without this, `docker compose
+    # up` re-runs whatever binary was baked in at the last `--build`, silently ignoring any
+    # backend source changes made since.
+    command: ["go", "run", "."]
+    working_dir: /src
     ports:
       - "8080:8080"
     volumes:
-      - ./.env:/app/.env:ro
+      - .:/src
+      - backend-go-build-cache:/root/.cache/go-build
 
   frontend:
     build:
@@ -28,3 +38,4 @@ services:
 
 volumes:
   frontend-node-modules:
+  backend-go-build-cache:
