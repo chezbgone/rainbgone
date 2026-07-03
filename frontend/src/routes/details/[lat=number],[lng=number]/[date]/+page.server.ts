@@ -28,18 +28,31 @@ export const load = (async ({ fetch, params }) => {
 
 	const day = days[dayIndex];
 	// The day's hourly entries, midnight to midnight (plus the closing midnight as the
-	// 25th point). The backend's `hourlyFromMidnight` is a flat series anchored at today's
-	// midnight (today backfilled via the Time Machine API), so each day is a contiguous
-	// 24-hour slice; the +1 includes the next midnight for the closing tick/label that
-	// Stripes needs to draw the day's last hour.
-	const start = dayIndex * 24;
-	const hourly = forecast.hourlyFromMidnight.slice(start, start + 25);
-	// The final covered day has no next hour in the series, so the slice above comes up
-	// short of 25 entries and lacks that closing tick, which would make Stripes drop the
-	// day's last real hour. Synthesize the boundary from the last hour instead.
-	if (hourly.length > 0 && hourly.length < 25) {
-		const last = hourly[hourly.length - 1];
-		hourly.push({ ...last, time: last.time + 3600 });
+	// closing tick Stripes needs to draw the day's last hour). Selected by matching each
+	// entry's local calendar date against `date`, rather than assuming `hourlyFromMidnight`
+	// is a clean N*24-long series starting at midnight: the backend's Time Machine backfill
+	// is best-effort (see server/forecast.go), so a degraded/failing backfill can leave the
+	// series short or starting later than midnight. Filtering by local date means each day
+	// still renders whatever hours it actually has — worst case today starts later than
+	// midnight — instead of every day sliding off its boundary in lockstep.
+	const series = forecast.hourlyFromMidnight;
+	let lastIndex = -1;
+	const hourly = series.filter((h, i) => {
+		const matches = formatDateKey(h.time, forecast.timezone) === date;
+		if (matches) lastIndex = i;
+		return matches;
+	});
+	// Close the boundary with the real next hour when the series has one (e.g. today, or
+	// any day that isn't the last one covered); otherwise synthesize it from the last hour,
+	// same as before.
+	if (hourly.length > 0) {
+		const next = series[lastIndex + 1];
+		if (next) {
+			hourly.push(next);
+		} else {
+			const last = hourly[hourly.length - 1];
+			hourly.push({ ...last, time: last.time + 3600 });
+		}
 	}
 	const previousDay = days[dayIndex - 1];
 	const nextDay = days[dayIndex + 1];
