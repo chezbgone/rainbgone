@@ -9,5 +9,8 @@
 </script>
 
 <Header />
-<SearchBar defaultAddress={page.data.geocode?.formatted_address ?? ''} />
+<SearchBar
+	defaultAddress={page.data.geocode?.formatted_address ?? page.data.formattedAddress ?? ''}
+	back={page.data.links?.back}
+/>
 {@render children()}
