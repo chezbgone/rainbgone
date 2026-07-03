@@ -47,13 +47,20 @@ func getForecast(lat, lon float64) ([]byte, error) {
 	return body, nil
 }
 
-// getTimeMachine fetches the Time Machine forecast for "now". Unlike the regular
+// getTimeMachine fetches the Time Machine forecast anchored at `ts`. Unlike the regular
 // forecast (whose hourly series starts at the current hour), this returns a clean
 // midnight-to-midnight block for the location's local day — used to backfill the
-// hours of today that have already elapsed. Passing the raw current Unix timestamp
-// is correct for any timezone: it is an absolute instant, and the API buckets it
-// into the location's local day.
-func getTimeMachine(lat, lon float64) ([]byte, error) {
+// hours of today that have already elapsed.
+//
+// The timestamp matters more than the doc suggests: the upstream API is inconsistent
+// when asked about "now" — depending on which backend instance answers, it sometimes
+// returns the historical local day (what we want) and sometimes a forward-looking
+// forecast starting at the current hour (useless for backfill, and silently discarded
+// by mergeHourlyFromMidnight's cutoff filter). Passing a timestamp anchored well inside
+// the elapsed part of the local day (the caller uses local midnight) got a 6/6 historical
+// response in testing, vs. 5/6 for a raw `time.Now()`. See ForecastHandler for how `ts`
+// is derived from the location's timezone.
+func getTimeMachine(lat, lon float64, ts int64) ([]byte, error) {
 	cacheKey := fmt.Sprintf("%f,%f", lat, lon)
 	if cached, found := timeMachineCache.Get(cacheKey); found {
 		return cached, nil
@@ -61,10 +68,9 @@ func getTimeMachine(lat, lon float64) ([]byte, error) {
 
 	baseURL := "https://timemachine.pirateweather.net/forecast"
 	apiKey := appConfig.pirateWeatherKey
-	now := time.Now().Unix()
 	params := url.Values{}
 	params.Add("exclude", "minutely,alerts")
-	requestURL := fmt.Sprintf("%s/%s/%f,%f,%d?%s", baseURL, apiKey, lat, lon, now, params.Encode())
+	requestURL := fmt.Sprintf("%s/%s/%f,%f,%d?%s", baseURL, apiKey, lat, lon, ts, params.Encode())
 
 	resp, err := forecastHTTPClient.Get(requestURL)
 	if err != nil {
@@ -132,14 +138,25 @@ func mergeHourlyFromMidnight(forecastMap map[string]interface{}, timeMachineBody
 	}
 
 	result := make([]interface{}, 0, len(fcHours)+24)
+	backfilled := 0
 
 	if hasCutoff && timeMachineBody != nil {
 		var tm map[string]interface{}
-		if err := json.Unmarshal(timeMachineBody, &tm); err == nil {
+		if err := json.Unmarshal(timeMachineBody, &tm); err != nil {
+			log.Printf("time machine body unparseable, today's hourly will start at the current hour: %v", err)
+		} else {
 			for _, h := range hourlyData(tm) {
 				if t, ok := hourTime(h); ok && t < cutoff {
 					result = append(result, h)
+					backfilled++
 				}
+			}
+			// A non-nil, parseable body that still backfills nothing is the known failure
+			// mode where Time Machine answers "now" with a forward-looking forecast instead
+			// of the historical local day (see getTimeMachine) — surface it instead of
+			// silently falling back, since it used to fail invisibly.
+			if backfilled == 0 {
+				log.Printf("time machine returned no hours before the forecast cutoff, today's hourly will start at the current hour")
 			}
 		}
 	}
@@ -156,11 +173,6 @@ type forecastResult struct {
 type reverseGeocodeResult struct {
 	result *GeocodeResult
 	err    error
-}
-
-type timeMachineResult struct {
-	body []byte
-	err  error
 }
 
 func ForecastHandler(w http.ResponseWriter, r *http.Request) {
@@ -195,15 +207,6 @@ func ForecastHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	timeMachineCh := make(chan timeMachineResult, 1)
-	go func() {
-		timeMachineBytes, err := getTimeMachine(lat, lng)
-		timeMachineCh <- timeMachineResult{
-			body: timeMachineBytes,
-			err:  err,
-		}
-	}()
-
 	forecastResp := <-forecastCh
 	if forecastResp.err != nil {
 		http.Error(w, fmt.Sprintf("Error fetching weather data: %v", forecastResp.err), http.StatusInternalServerError)
@@ -225,13 +228,26 @@ func ForecastHandler(w http.ResponseWriter, r *http.Request) {
 
 	forecastMap["formatted_address"] = geocodeResp.result.FormattedAddress
 
-	// The Time Machine call is best-effort: on failure, the midnight-anchored series
-	// simply starts at the current hour (today's elapsed morning absent).
-	timeMachineResp := <-timeMachineCh
-	if timeMachineResp.err != nil {
-		log.Printf("time machine fetch failed, today's hourly will start at the current hour: %v", timeMachineResp.err)
+	// The Time Machine call runs after (not concurrently with) the forecast fetch because
+	// it needs the location's timezone, which only the forecast response carries. It's
+	// anchored to local midnight rather than time.Now() — see getTimeMachine for why: the
+	// upstream API is unreliable about "now" and reliably returns the historical local day
+	// when asked about a timestamp well inside the elapsed part of the day. It's still
+	// best-effort: on failure, the midnight-anchored series simply starts at the current
+	// hour (today's elapsed morning absent).
+	tz, _ := forecastMap["timezone"].(string)
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		loc = time.UTC
 	}
-	forecastMap["hourlyFromMidnight"] = mergeHourlyFromMidnight(forecastMap, timeMachineResp.body)
+	now := time.Now().In(loc)
+	midnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).Unix()
+
+	timeMachineBytes, err := getTimeMachine(lat, lng, midnight)
+	if err != nil {
+		log.Printf("time machine fetch failed, today's hourly will start at the current hour: %v", err)
+	}
+	forecastMap["hourlyFromMidnight"] = mergeHourlyFromMidnight(forecastMap, timeMachineBytes)
 
 	responseBytes, err := json.Marshal(forecastMap)
 	if err != nil {
