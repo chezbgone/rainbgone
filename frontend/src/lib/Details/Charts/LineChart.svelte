@@ -35,11 +35,17 @@
 	// (index / (hourCount - 1)) so the scrubber overlay lines up across both components.
 	const xScale = $derived(linearScale([0, hours.length - 1], [0, width]));
 
+	// Time Machine's historical backfill for today's already-elapsed hours doesn't carry
+	// every field the regular forecast does (e.g. precipProbability, humidity, uvIndex,
+	// visibility are simply absent), which reads as undefined/NaN here. Filter those out of
+	// the axis and the line so a metric with partial coverage still draws a partial line,
+	// instead of one NaN coordinate invalidating the whole spline path.
 	const bounds = $derived.by(() =>
-		niceBounds(
-			hours.flatMap((h) => series.map((s) => s.value(h))),
-			{ fromZero, minRange, max }
-		)
+		niceBounds(hours.flatMap((h) => series.map((s) => s.value(h))).filter(Number.isFinite), {
+			fromZero,
+			minRange,
+			max
+		})
 	);
 
 	const yScale = $derived(
@@ -49,7 +55,11 @@
 	const paths = $derived(
 		series.map((s) => ({
 			color: s.color,
-			d: splinePath(hours.map((h, i) => ({ x: xScale(i), y: yScale(s.value(h)) })))
+			d: splinePath(
+				hours
+					.map((h, i) => ({ x: xScale(i), y: yScale(s.value(h)) }))
+					.filter((p) => Number.isFinite(p.y))
+			)
 		}))
 	);
 
