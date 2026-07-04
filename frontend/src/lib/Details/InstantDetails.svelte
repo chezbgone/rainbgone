@@ -52,17 +52,23 @@
 </script>
 
 <div class="mt-8 flex flex-wrap gap-y-2 text-center text-sm">
-	{#each details as detail}
+	{#each details as detail (detail.label)}
 		<div class="basis-1/2 sm:basis-1/4">
 			<span class="font-medium">{detail.label}:</span>
 			<span class="font-light">{detail.value}</span>
 		</div>
 	{/each}
 
-	<!-- UV index, with a color-coded chip -->
+	<!-- UV index, with a color-coded chip. Time Machine's backfill for today's elapsed hours
+	     can leave uvIndex missing; skip the color coding then so a missing reading doesn't
+	     read as a real low-UV value. -->
 	<div class="basis-1/2 sm:basis-1/4">
 		<span class="font-medium">UV Index:</span>
-		<span class="ml-1 rounded px-1.5 py-0.5 font-light {uvLevel(values.uvIndex)}">
+		<span
+			class="ml-1 rounded px-1.5 py-0.5 font-light {Number.isFinite(values.uvIndex)
+				? uvLevel(values.uvIndex)
+				: ''}"
+		>
 			{number(values.uvIndex)}
 		</span>
 	</div>

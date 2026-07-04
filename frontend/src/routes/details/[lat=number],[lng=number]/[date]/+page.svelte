@@ -11,7 +11,14 @@
 </script>
 
 <main class="mx-auto max-w-[800px] px-4 pb-12 text-neutral-800">
-	<DayNavigation {...data.links} time={data.day.time} timezone={data.timezone} />
+	<DayNavigation
+		previous={data.links.previous}
+		previousLabel={data.links.previousLabel}
+		next={data.links.next}
+		nextLabel={data.links.nextLabel}
+		time={data.day.time}
+		timezone={data.timezone}
+	/>
 
 	<p class="mx-1 mt-5 mb-8 text-center text-[2rem] leading-tight font-light">{data.day.summary}</p>
 
