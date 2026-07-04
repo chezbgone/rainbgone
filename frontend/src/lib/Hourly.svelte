@@ -10,4 +10,7 @@
 	const hours = $derived(hourly.data.slice(0, 25));
 </script>
 
+<div class="text-center text-2xl font-light">
+	{hourly.summary}
+</div>
 <Stripes {hours} />

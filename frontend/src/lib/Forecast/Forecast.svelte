@@ -5,6 +5,7 @@
 	import LazyMap from '$lib/LazyMap.svelte';
 	import type { Geocode, Forecast } from './types';
 	import { classifyWeather, Weather } from '$lib/common/weather';
+	import Minutely from '$lib/Minutely.svelte';
 
 	interface Props {
 		geocode: Geocode;
@@ -29,7 +30,8 @@
 	});
 </script>
 
-<Current currently={forecast.currently} minutely={forecast.minutely} daily={forecast.daily} />
+<Current currently={forecast.currently} daily={forecast.daily} />
+<Minutely minutely={forecast.minutely} />
 <Hourly hourly={forecast.hourly} />
 <LazyMap location={geocode.geometry.location} {precipitationSoon} />
 <Daily

@@ -95,7 +95,7 @@
 			const point = points[index];
 			const normalizedX = points.length > 0 ? index / points.length : 0;
 			const x = points.length > 1 ? (index * width) / (points.length - 1) : 0;
-			const wobbleIntensity = clamp(point.error, 0.00004, 0.00015);
+			const wobbleIntensity = clamp(point.error, 0, 0.00015);
 			const intensity = clamp(point.intensity + wobbleIntensity * wobbleOffset(normalizedX, time));
 
 			context.lineTo(x, height * (1 - intensity));
@@ -124,8 +124,10 @@
 </script>
 
 {#if hasPrecip}
-	<div class="mx-auto my-4 pt-2 text-center">
-		<div class="inline-flex items-start">
+	<div class="mx-auto pt-2 text-center">
+		<div class="text-lg font-light">Next Hour: {minutely.summary}</div>
+
+		<div class="inline-flex items-start pt-4">
 			<div class="w-[350px]">
 				<div class="relative h-[120px] w-[350px]">
 					<canvas bind:this={canvas} {width} {height} class="block h-[120px] w-[350px]"></canvas>
@@ -146,7 +148,7 @@
 				</div>
 
 				<!-- labels -->
-				<div class="flex h-4 justify-between pb-12">
+				<div class="flex h-4 justify-between pb-8">
 					{#each Array(7) as _, i}
 						<div class="relative">
 							{#if i % 2 === 1}
@@ -165,7 +167,5 @@
 				<div>Light</div>
 			</div>
 		</div>
-
-		<div class="mt-2 text-xl font-light">Next Hour: {minutely.summary}</div>
 	</div>
 {/if}

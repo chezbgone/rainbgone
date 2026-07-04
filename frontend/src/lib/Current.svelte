@@ -1,15 +1,13 @@
 <script lang="ts">
 	import Measurement from '$lib/common/Measurement.svelte';
 	import type { Forecast } from './Forecast/types';
-	import Minutely from './Minutely.svelte';
 
 	interface Props {
 		currently: Forecast['currently'];
-		minutely: Forecast['minutely'];
 		daily: Forecast['daily'];
 	}
 
-	let { currently, minutely, daily }: Props = $props();
+	let { currently, daily }: Props = $props();
 
 	// Pirate Weather can return 'thunderstorm', which we don't have an icon for yet.
 	const currentIcon = currently.icon === 'thunderstorm' ? 'rain' : currently.icon;
@@ -36,8 +34,8 @@
 	</Measurement>
 </div>
 
-<div class="m-4 text-center">
-	<div class="mb-2 inline-flex items-center gap-2">
+<div class="mt-4 text-center">
+	<div class="inline-flex items-center gap-4">
 		<img width="84" height="84" src={`/weather-icons/${currentIcon}.png`} alt="" />
 		<div>
 			<div class="text-4xl/12 font-semibold">
@@ -56,8 +54,4 @@
 			</div>
 		</div>
 	</div>
-	<div class="text-center text-2xl font-light">
-		{currently.summary}.
-	</div>
-	<Minutely {minutely} />
 </div>
