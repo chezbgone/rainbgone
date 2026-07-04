@@ -6,9 +6,10 @@
 
 	interface Props {
 		hours: HourlyDatum[];
+		timezone: string;
 	}
 
-	let { hours }: Props = $props();
+	let { hours, timezone }: Props = $props();
 
 	interface SeriesConfig {
 		value: (h: HourlyDatum) => number;
@@ -97,6 +98,7 @@
 	{#each charts as chart (chart.label)}
 		<LineChart
 			{hours}
+			{timezone}
 			label={chart.label}
 			unit={chart.unit}
 			fromZero={chart.fromZero}

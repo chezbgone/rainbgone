@@ -1,5 +1,6 @@
-export const formatUnixTime = (time: number) =>
+export const formatUnixTime = (time: number, timeZone?: string) =>
 	new Intl.DateTimeFormat('en-US', {
+		timeZone,
 		hour: 'numeric',
 		hour12: true
 	})

@@ -6,6 +6,7 @@
 
 	interface Props {
 		hours: Forecast['hourly']['data'];
+		timezone: string;
 	}
 
 	interface Tick {
@@ -18,7 +19,7 @@
 		weather: Weather;
 	}
 
-	let { hours }: Props = $props();
+	let { hours, timezone }: Props = $props();
 
 	const ticks: Tick[] = $derived(hours.map((h) => ({ time: h.time, temperature: h.temperature })));
 	const stripes: Stripe[] = $derived.by(() => {
@@ -85,7 +86,7 @@
 		{#each ticks as tick}
 			<div class="group relative even:hidden">
 				<div class="absolute top-0 text-xs not-group-first:-translate-x-1/2">
-					{formatUnixTime(tick.time)}
+					{formatUnixTime(tick.time, timezone)}
 				</div>
 				<div class="absolute top-4 text-lg font-light not-group-first:-translate-x-[calc(50%-2px)]">
 					{Math.round(tick.temperature)}°

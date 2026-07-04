@@ -21,6 +21,7 @@
 
 	interface Props {
 		hours: HourlyDatum[];
+		timezone: string;
 		label: string;
 		series: SeriesConfig[];
 		unit: string;
@@ -29,7 +30,7 @@
 		max?: number;
 	}
 
-	let { hours, label, series, unit, fromZero, minRange, max }: Props = $props();
+	let { hours, timezone, label, series, unit, fromZero, minRange, max }: Props = $props();
 
 	// Edge-to-edge: hour 0 at x=0, the last hour at x=width. Matches Stripes' tick spacing
 	// (index / (hourCount - 1)) so the scrubber overlay lines up across both components.
@@ -96,7 +97,7 @@
 						class="fill-neutral-500"
 						font-size="14"
 					>
-						{formatUnixTime(tick.time)}
+						{formatUnixTime(tick.time, timezone)}
 					</text>
 				{/each}
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Stripes from '$lib/common/Stripes.svelte';
-	import { formatDateKey, formatUnixTime } from '$lib/common/time';
+	import { formatDateKey, formatHourMinute, formatUnixTime } from '$lib/common/time';
 	import type { Forecast } from '../Forecast/types';
 
 	interface Props {
@@ -21,10 +21,10 @@
 
 	const getDayName = (dt: number) => {
 		if (today) return 'Today';
-		return new Date(dt * 1000).toLocaleDateString(undefined, { weekday: 'short' });
+		return new Intl.DateTimeFormat(undefined, { timeZone: timezone, weekday: 'short' }).format(
+			dt * 1000
+		);
 	};
-	const formatHourMinute = (unixTime: number) =>
-		new Date(unixTime * 1000).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 
 	const left = ((daily.temperatureMin - minTemp) / (maxTemp - minTemp)) * 100;
 	const width = ((daily.temperatureMax - daily.temperatureMin) / (maxTemp - minTemp)) * 100;
@@ -79,19 +79,19 @@
 		<div class="my-2 inline-flex items-center gap-16 text-neutral-800">
 			<div>
 				<span class="text-2xl">{Math.round(daily.temperatureMin)}°</span>
-				<span class="font-light">{formatUnixTime(daily.temperatureMinTime)}</span>
+				<span class="font-light">{formatUnixTime(daily.temperatureMinTime, timezone)}</span>
 				<span class="mx-2 text-2xl font-light">&#8594;</span>
 				<span class="text-2xl">{Math.round(daily.temperatureMax)}°</span>
-				<span class="font-light">{formatUnixTime(daily.temperatureMaxTime)}</span>
+				<span class="font-light">{formatUnixTime(daily.temperatureMaxTime, timezone)}</span>
 			</div>
 			<div class="font-light">
 				<span>
 					<img src="sunrise.png" alt="Sunrise icon" class="inline h-6 w-6" />
-					<span>{formatHourMinute(daily.sunriseTime)}</span>
+					<span>{formatHourMinute(daily.sunriseTime, timezone)}</span>
 				</span>
 				<span>
 					<img src="sunset.png" alt="Sunset icon" class="ml-4 inline h-6 w-6" />
-					<span>{formatHourMinute(daily.sunsetTime)}</span>
+					<span>{formatHourMinute(daily.sunsetTime, timezone)}</span>
 				</span>
 			</div>
 			<div>
@@ -100,7 +100,7 @@
 				<span class="font-light">in</span>
 			</div>
 		</div>
-		<Stripes hours={hourly} />
+		<Stripes hours={hourly} {timezone} />
 		<a
 			href={detailsHref}
 			class="mb-4 inline-block rounded-sm bg-blue-500 px-4 py-2 text-white uppercase hover:bg-blue-600"

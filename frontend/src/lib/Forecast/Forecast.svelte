@@ -32,7 +32,7 @@
 
 <Current currently={forecast.currently} daily={forecast.daily} />
 <Minutely minutely={forecast.minutely} />
-<Hourly hourly={forecast.hourly} />
+<Hourly hourly={forecast.hourly} timezone={forecast.timezone} />
 <LazyMap location={geocode.geometry.location} {precipitationSoon} />
 <Daily
 	daily={forecast.daily}

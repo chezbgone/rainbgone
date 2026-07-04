@@ -4,13 +4,14 @@
 
 	interface Props {
 		hourly: Forecast['hourly'];
+		timezone: string;
 	}
 
-	let { hourly }: Props = $props();
+	let { hourly, timezone }: Props = $props();
 	const hours = $derived(hourly.data.slice(0, 25));
 </script>
 
 <div class="text-center text-2xl font-light">
 	{hourly.summary}
 </div>
-<Stripes {hours} />
+<Stripes {hours} {timezone} />

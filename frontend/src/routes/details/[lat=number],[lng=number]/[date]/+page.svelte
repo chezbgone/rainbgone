@@ -27,9 +27,9 @@
 	{#if data.hourly.length > 0}
 		<Scrubber hours={data.hourly}>
 			{#snippet children(hour)}
-				<Stripes hours={data.hourly} />
+				<Stripes hours={data.hourly} timezone={data.timezone} />
 				<InstantDetails hours={data.hourly} {hour} />
-				<HourlyCharts hours={data.hourly} />
+				<HourlyCharts hours={data.hourly} timezone={data.timezone} />
 			{/snippet}
 		</Scrubber>
 	{:else}
