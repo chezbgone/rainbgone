@@ -59,25 +59,25 @@
 				maxZoom: 19
 			});
 
-			if (precipitationSoon) {
-				map.on('load', () => {
-					latestRadarTileUrl().then((tileUrl) => {
-						if (!map || !tileUrl) return; // map torn down (cleanup nulls it) or fetch failed
-						map.addSource('librewxr-radar', {
-							type: 'raster',
-							tiles: [tileUrl],
-							tileSize: 256,
-							attribution: 'Radar © <a href="https://librewxr.net/">LibreWXR</a> (CC-BY 4.0)'
-						});
-						map.addLayer({
-							id: 'librewxr-radar',
-							type: 'raster',
-							source: 'librewxr-radar',
-							paint: { 'raster-opacity': 0.7 }
-						});
+			// TODO: gate this on `precipitationSoon` again once the temperature map is
+			// implemented — for now the radar always loads since there's no other map to show.
+			map.on('load', () => {
+				latestRadarTileUrl().then((tileUrl) => {
+					if (!map || !tileUrl) return; // map torn down (cleanup nulls it) or fetch failed
+					map.addSource('librewxr-radar', {
+						type: 'raster',
+						tiles: [tileUrl],
+						tileSize: 256,
+						attribution: 'Radar © <a href="https://librewxr.net/">LibreWXR</a> (CC-BY 4.0)'
+					});
+					map.addLayer({
+						id: 'librewxr-radar',
+						type: 'raster',
+						source: 'librewxr-radar',
+						paint: { 'raster-opacity': 0.7 }
 					});
 				});
-			}
+			});
 
 			$effect(() => {
 				map?.setCenter([lng, lat]);
