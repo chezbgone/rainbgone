@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { clampXFraction, hourFromXFraction } from './Charts/geometry';
+	import { clampXFraction, hourFromXFraction, hourXFraction } from './Charts/geometry';
 	import { Spring } from 'svelte/motion';
 	import { untrack, type Snippet } from 'svelte';
 	import type { Forecast } from '$lib/Forecast/types';
@@ -16,18 +16,39 @@
 	// Scrubber: a single overlay div positioned over the whole Stripes + InstantDetails + chart
 	// stack, driven purely by pointer position + the shared hour<->fraction geometry
 	// (src/lib/Details/Charts/geometry.ts). None of the wrapped components know about it. It's
-	// always visible (starting centered on the day), tracks the pointer continuously (not
-	// snapped to hour columns), and only moves while click/touch-dragging, not on plain hover.
-	// The rendered position trails the pointer with a critically damped spring (drag
-	// "friction") rather than snapping straight to it. Because the charts and Stripes' ticks
-	// both place hour `i` at fraction `i / (hours.length - 1)`, one straight line stays
-	// correct over both.
-	let targetFraction = $state(0.5);
+	// always visible — starting at the current time when the day spans "now" (today), or
+	// centered on the day otherwise — tracks the pointer continuously (not snapped to hour
+	// columns), and only moves while click/touch-dragging, not on plain hover. The rendered
+	// position trails the pointer with a critically damped spring (drag "friction") rather
+	// than snapping straight to it. Because the charts and Stripes' ticks both place hour `i`
+	// at fraction `i / (hours.length - 1)`, one straight line stays correct over both.
+
+	// Starting fraction: the current time's position if `hours` spans "now" (i.e. this is
+	// today), otherwise centered. Read once per day (see the recenter effect below), so this
+	// is a starting position, not a live clock.
+	function initialFraction(hs: HourlyDatum[]): number {
+		if (hs.length < 2) return 0.5;
+		const now = Date.now() / 1000;
+		const first = hs[0].time;
+		const last = hs[hs.length - 1].time;
+		// Only today's page spans the current instant; other days start centered.
+		if (now < first || now > last) return 0.5;
+		// Entries are uniformly hourly (the same assumption behind the i/(n-1) fraction
+		// spacing elsewhere), so a fractional index is just elapsed hours since the first entry.
+		const fractionalIndex = (now - first) / 3600;
+		return clampXFraction(hourXFraction(fractionalIndex, hs.length), hs.length);
+	}
+
+	let targetFraction = $state(initialFraction(hours));
 	// precision is in the same units as the spring's value — since position lives in [0,1]
 	// fraction space (not pixels), the default precision (0.01, tuned for pixel-scale values)
 	// is ~1% of the container width and causes a visible final-frame jump. Lower it so the
 	// spring's terminal step is sub-pixel instead.
-	const position = new Spring(0.5, { stiffness: 0.15, damping: 1, precision: 0.0001 });
+	const position = new Spring(initialFraction(hours), {
+		stiffness: 0.15,
+		damping: 1,
+		precision: 0.0001
+	});
 	let dragging = $state(false);
 
 	// Follow the pointer's target fraction with spring friction.
@@ -43,8 +64,9 @@
 	$effect(() => {
 		dayKey;
 		untrack(() => {
-			targetFraction = 0.5;
-			position.set(0.5, { instant: true });
+			const f = initialFraction(hours);
+			targetFraction = f;
+			position.set(f, { instant: true });
 		});
 	});
 
