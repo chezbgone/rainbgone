@@ -10,7 +10,7 @@
 	let { currently, daily }: Props = $props();
 
 	// Pirate Weather can return 'thunderstorm', which we don't have an icon for yet.
-	const currentIcon = currently.icon === 'thunderstorm' ? 'rain' : currently.icon;
+	const currentIcon = $derived(currently.icon === 'thunderstorm' ? 'rain' : currently.icon);
 </script>
 
 <div class="flex justify-center gap-4 bg-neutral-100 py-2 text-sm">

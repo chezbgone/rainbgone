@@ -17,7 +17,7 @@
 	let { daily, hourly, minTemp, maxTemp, today, lat, lng, timezone }: Props = $props();
 
 	// Pirate Weather can return 'thunderstorm', which we don't have an icon for yet.
-	const dailyIcon = daily.icon === 'thunderstorm' ? 'rain' : daily.icon;
+	const dailyIcon = $derived(daily.icon === 'thunderstorm' ? 'rain' : daily.icon);
 
 	const getDayName = (dt: number) => {
 		if (today) return 'Today';
@@ -26,9 +26,11 @@
 		);
 	};
 
-	const left = ((daily.temperatureMin - minTemp) / (maxTemp - minTemp)) * 100;
-	const width = ((daily.temperatureMax - daily.temperatureMin) / (maxTemp - minTemp)) * 100;
-	const right = ((daily.temperatureMax - minTemp) / (maxTemp - minTemp)) * 100;
+	const left = $derived(((daily.temperatureMin - minTemp) / (maxTemp - minTemp)) * 100);
+	const width = $derived(
+		((daily.temperatureMax - daily.temperatureMin) / (maxTemp - minTemp)) * 100
+	);
+	const right = $derived(((daily.temperatureMax - minTemp) / (maxTemp - minTemp)) * 100);
 
 	let opened = $state(false);
 	const detailsHref = $derived(`/details/${lat},${lng}/${formatDateKey(daily.time, timezone)}`);
