@@ -120,9 +120,8 @@ All caches use `server/cache.go`.
 | Forecast | `lat,lng` | 1 minute |
 | Time Machine | `lat,lng` | 1 minute |
 | Reverse geocode | `lat,lng` | 24 hours |
-| Background tiles | `variant/z/x/y` | 5 minutes |
 
-The cache is in memory only. It is not shared across processes or persisted across restarts.
+Each cache is capped at 256 entries and 16 MiB of keys and response bodies. Reads remove expired entries; writes prune expired entries and evict the earliest-expiring entries until both limits fit. Oversized responses are served without caching. Memory remains bounded even when expired locations are never requested again. The cache is in memory only. It is not shared across processes or persisted across restarts.
 
 ## Tests
 
