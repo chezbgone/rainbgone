@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Day from './Day.svelte';
 	import type { Forecast } from '../Forecast/types';
+	import { hoursForDate } from '$lib/common/hourly';
+	import { formatDateKey } from '$lib/common/time';
 
 	interface Props {
 		daily: Forecast['daily'];
@@ -27,7 +29,7 @@
 				daily={day}
 				{minTemp}
 				{maxTemp}
-				hourly={hourlyFromMidnight.slice(i * 24, i * 24 + 25)}
+				hourly={hoursForDate(hourlyFromMidnight, formatDateKey(day.time, timezone), timezone)}
 				{lat}
 				{lng}
 				{timezone}

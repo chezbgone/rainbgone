@@ -66,6 +66,8 @@ Forecast and Time Machine responses are cached in memory by latitude and longitu
 
 The forecast response also carries the provider's `timezone` string. The frontend formats every displayed time and computes local date keys against this zone (`frontend/src/lib/common/time.ts`, via `Intl.DateTimeFormat({ timeZone })`), not the browser's, so displayed clock times and day boundaries reflect the forecast location.
 
+Both the main page's daily rows and the details loader use `frontend/src/lib/common/hourly.ts` to select entries by local calendar date and append a closing hourly tick. This keeps rows aligned when morning backfill is missing and on 23- or 25-hour daylight-saving days.
+
 ## Geocoding Flow
 
 Address routes are handled by `frontend/src/routes/[address]/+page.server.ts`.

@@ -108,9 +108,8 @@ export interface Forecast {
 		}[];
 	};
 	// Flat hourly series anchored at today's local midnight (today's elapsed hours are
-	// backfilled by the backend via the Time Machine API). Use this for per-day stripes
-	// via contiguous 24-hour slices, instead of `hourly`, whose series starts at the
-	// current hour.
+	// backfilled by the backend via the Time Machine API). Select per-day stripes by
+	// local date with hoursForDate; backfill may be absent and DST days vary in length.
 	hourlyFromMidnight: Forecast['hourly']['data'];
 	daily: {
 		summary: string;
