@@ -20,6 +20,8 @@ Frontend:
 cd frontend
 npm run dev       # Vite dev server
 npm run check     # TypeScript + Svelte type check
+npm test          # Vitest regression suite (no live providers)
+npm run test:watch
 npm run lint      # Prettier format check
 npm run format    # Apply Prettier formatting
 npm run build
@@ -38,7 +40,7 @@ Run the narrowest relevant check for the files changed:
 - Formatting-only frontend changes: `cd frontend && npm run lint`
 - Docker/runtime changes: validate compose syntax or build the touched service
 
-Backend tests use the standard library and fake HTTP transports; no API keys or live services are needed. CI runs them on pushes and pull requests. If the user asks to skip validation, state that it was skipped.
+Backend tests use the standard library and fake HTTP transports; frontend tests use Vitest and Svelte Testing Library. No API keys or live services are needed. CI runs both suites on pushes and pull requests. If the user asks to skip validation, state that it was skipped.
 
 ## Configuration
 

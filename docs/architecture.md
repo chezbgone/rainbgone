@@ -43,7 +43,7 @@ The frontend proxy target is configured separately:
 | Env var | Used by | Purpose |
 | --- | --- | --- |
 | `API_PROXY_TARGET` | `frontend/src/hooks.server.ts` | Runtime SvelteKit server proxy target. |
-| `VITE_API_PROXY_TARGET` | `frontend/vite.config.ts` | Vite dev server proxy target (dev only). |
+| `VITE_API_PROXY_TARGET` | `frontend/src/hooks.server.ts` | Fallback proxy target when `API_PROXY_TARGET` is unset. |
 | `PUBLIC_LIBREWXR_BASE_URL` | `frontend/src/lib/Map.svelte` | LibreWXR radar base URL. Public (`$env/dynamic/public`), read in the browser. Defaults to `https://api.librewxr.net`; override to use a self-hosted instance. |
 
 Both frontend proxy variables default to `http://localhost:8080`.
@@ -127,6 +127,8 @@ Each cache is capped at 256 entries and 16 MiB of keys and response bodies. Read
 
 Run `go test -race ./...` and `go vet ./...` from the repository root. Backend tests replace provider HTTP transports with controlled responses and dummy configuration; they never need `.env` or live API access. `.github/workflows/test.yml` runs these checks on pushes and pull requests.
 
+From `frontend/`, run `npm test` (or `npm run test:watch`). Vitest runs server and helper tests in Node, while Svelte component tests select jsdom and use Svelte Testing Library. Network calls are mocked. CI also runs `npm run check` and `npm run build`.
+
 Weather provider URLs contain an API key. Network failures are converted to safe errors before they can reach logs, and forecast failures return generic public errors.
 
 ## Frontend Routes
@@ -142,12 +144,9 @@ Weather provider URLs contain an API key. Network failures are converted to safe
 
 The frontend uses `/api/...` for backend calls.
 
-There are two proxy paths:
+`frontend/src/hooks.server.ts` handles the proxy in both Vite development and the production SvelteKit server. Only `/api/forecast` and `/api/geocode` are allowed, using GET or HEAD. Unknown API paths return 404 and unsupported methods return 405. The handler assigns the path and query to the configured backend URL without permitting a path to replace its origin, forwards only the Accept header, and does not follow redirects. Connection failures return a generic 502.
 
-- `frontend/vite.config.ts` proxies `/api` during Vite development.
-- `frontend/src/hooks.server.ts` proxies `/api` during SvelteKit server runtime.
-
-Both strip the `/api` prefix before forwarding to the Go backend. For example:
+The handler strips the `/api` prefix before forwarding to the Go backend. For example:
 
 ```text
 /api/forecast?lat=47.6062&lng=-122.3321

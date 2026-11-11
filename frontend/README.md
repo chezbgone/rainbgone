@@ -1,5 +1,15 @@
 # sv
 
+## Tests
+
+Run `npm test` for the regression suite or `npm run test:watch` during development.
+Vitest runs TypeScript tests in Node; component tests opt into jsdom with a file-level
+environment comment and use Svelte Testing Library. Tests use fixtures and mocked
+network calls, so no backend, API keys, or live providers are required.
+
+Run `npm run check` and `npm run build` for type checking and production validation.
+CI runs all three commands on pushes and pull requests.
+
 Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
 
 ## Creating a project
