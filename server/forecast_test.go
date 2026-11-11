@@ -2,7 +2,9 @@ package server
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -41,7 +43,7 @@ func (b closingBody) Close() error {
 
 // Tests never run in parallel: they replace package-level clients and caches. Every
 // provider request is intercepted by a transport, including unexpected requests.
-func setupForecastTest(t *testing.T, transport roundTripFunc) {
+func setupForecastTest(t *testing.T, transport roundTripFunc) <-chan struct{} {
 	t.Helper()
 	oldConfig, oldForecastClient, oldGeocodeClient := appConfig, forecastHTTPClient, geocodeHTTPClient
 	oldForecastCache, oldTimeMachineCache, oldGeocodeCache := forecastCache, timeMachineCache, reverseGeocodeCache
@@ -64,6 +66,7 @@ func setupForecastTest(t *testing.T, transport roundTripFunc) {
 		appConfig, forecastHTTPClient, geocodeHTTPClient = oldConfig, oldForecastClient, oldGeocodeClient
 		forecastCache, timeMachineCache, reverseGeocodeCache = oldForecastCache, oldTimeMachineCache, oldGeocodeCache
 	})
+	return geocodeDone
 }
 
 func TestForecastNetworkErrorDoesNotExposeAPIKey(t *testing.T) {
@@ -98,5 +101,98 @@ func TestTimeMachineNetworkErrorDoesNotLogAPIKey(t *testing.T) {
 	}
 	if strings.Contains(logs.String(), "dummy-test-key") {
 		t.Fatal("time machine error logged the API key")
+	}
+}
+
+func TestForecastRejectsUpstreamErrorsWithoutCaching(t *testing.T) {
+	for _, status := range []int{http.StatusUnauthorized, http.StatusTooManyRequests, http.StatusServiceUnavailable} {
+		t.Run(http.StatusText(status), func(t *testing.T) {
+			calls := 0
+			geocodeDone := setupForecastTest(t, func(r *http.Request) (*http.Response, error) {
+				if r.URL.Host != "api.pirateweather.net" {
+					return testResponse(http.StatusServiceUnavailable, ""), nil
+				}
+				calls++
+				if calls == 1 {
+					return testResponse(status, `{"message":"Forbidden"}`), nil
+				}
+				return testResponse(http.StatusOK, testForecast), nil
+			})
+			for i, wantStatus := range []int{http.StatusBadGateway, http.StatusOK} {
+				w := httptest.NewRecorder()
+				ForecastHandler(w, httptest.NewRequest(http.MethodGet, "/forecast?lat=47&lng=-122", nil))
+				<-geocodeDone
+				if w.Code != wantStatus {
+					t.Errorf("request %d: expected %d, got %d", i, wantStatus, w.Code)
+				}
+			}
+			if calls != 2 {
+				t.Errorf("expected retry after failed upstream response, got %d calls", calls)
+			}
+		})
+	}
+}
+
+func TestForecastRejectsMalformedSuccessWithoutCaching(t *testing.T) {
+	var valid map[string]interface{}
+	if err := json.Unmarshal([]byte(testForecast), &valid); err != nil {
+		t.Fatal(err)
+	}
+	bodies := []string{"not JSON", "null", "[]", `{"message":"Forbidden"}`}
+	for _, field := range []string{"currently", "minutely", "hourly", "daily", "timezone"} {
+		copy := make(map[string]interface{})
+		for key, value := range valid {
+			copy[key] = value
+		}
+		delete(copy, field)
+		body, _ := json.Marshal(copy)
+		bodies = append(bodies, string(body))
+	}
+	for i, body := range bodies {
+		t.Run(fmt.Sprintf("body-%d", i), func(t *testing.T) {
+			calls := 0
+			geocodeDone := setupForecastTest(t, func(r *http.Request) (*http.Response, error) {
+				if r.URL.Host != "api.pirateweather.net" {
+					return testResponse(http.StatusServiceUnavailable, ""), nil
+				}
+				calls++
+				if calls == 1 {
+					return testResponse(http.StatusOK, body), nil
+				}
+				return testResponse(http.StatusOK, testForecast), nil
+			})
+			for _, wantStatus := range []int{http.StatusBadGateway, http.StatusOK} {
+				w := httptest.NewRecorder()
+				ForecastHandler(w, httptest.NewRequest(http.MethodGet, "/forecast?lat=47&lng=-122", nil))
+				<-geocodeDone
+				if w.Code != wantStatus {
+					t.Errorf("expected %d, got %d", wantStatus, w.Code)
+				}
+			}
+			if calls != 2 {
+				t.Fatal("invalid response was cached")
+			}
+		})
+	}
+}
+
+func TestValidForecastIsCached(t *testing.T) {
+	calls := 0
+	setupForecastTest(t, func(r *http.Request) (*http.Response, error) {
+		if r.URL.Host != "api.pirateweather.net" {
+			return testResponse(http.StatusServiceUnavailable, ""), nil
+		}
+		calls++
+		return testResponse(http.StatusOK, testForecast), nil
+	})
+	for range 2 {
+		w := httptest.NewRecorder()
+		ForecastHandler(w, httptest.NewRequest(http.MethodGet, "/forecast?lat=47&lng=-122", nil))
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected successful forecast, got %d", w.Code)
+		}
+	}
+	if calls != 1 {
+		t.Fatalf("expected one provider call, got %d", calls)
 	}
 }

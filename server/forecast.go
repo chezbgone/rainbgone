@@ -40,13 +40,49 @@ func getForecast(lat, lon float64) ([]byte, error) {
 	}
 	defer func() { _ = resp.Body.Close() }()
 
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("weather provider returned status %d", resp.StatusCode)
+	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("error reading weather data: %w", err)
 	}
 
+	if err := validateForecast(body); err != nil {
+		return nil, err
+	}
 	forecastCache.Set(cacheKey, body, forecastCacheTTL)
 	return body, nil
+}
+
+// Check the blocks consumed by the frontend before caching. In particular, valid
+// JSON error objects and null must never be presented as successful forecasts.
+func validateForecast(body []byte) error {
+	type dataBlock struct {
+		Data []map[string]interface{} `json:"data"`
+	}
+	var forecast struct {
+		Timezone  string                 `json:"timezone"`
+		Currently map[string]interface{} `json:"currently"`
+		Minutely  dataBlock              `json:"minutely"`
+		Hourly    dataBlock              `json:"hourly"`
+		Daily     dataBlock              `json:"daily"`
+	}
+	if err := json.Unmarshal(body, &forecast); err != nil {
+		return errors.New("weather provider returned invalid JSON")
+	}
+	if len(forecast.Currently) == 0 || forecast.Minutely.Data == nil ||
+		forecast.Hourly.Data == nil || len(forecast.Daily.Data) == 0 {
+		return errors.New("weather provider returned an incomplete forecast")
+	}
+	if forecast.Timezone == "" {
+		return errors.New("weather provider omitted timezone")
+	}
+	if _, err := time.LoadLocation(forecast.Timezone); err != nil {
+		return errors.New("weather provider returned an invalid timezone")
+	}
+	return nil
 }
 
 // getTimeMachine fetches the Time Machine forecast anchored at `ts`. Unlike the regular
