@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto, replaceState } from '$app/navigation';
+	import { goto } from '$app/navigation';
 
 	interface Props {
 		defaultAddress: string;
@@ -14,7 +14,7 @@
 		if (!address.trim()) {
 			return;
 		}
-		goto(`/${address}`);
+		goto(`/${encodeURIComponent(address.trim())}`);
 	}
 </script>
 
