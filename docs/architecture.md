@@ -30,7 +30,7 @@ The backend uses the standard library `net/http` package. There is no separate r
 
 ## Configuration
 
-`server/config.go` loads `.env` with `godotenv.Read()` during package initialization.
+`server/config.go` loads `.env` with `godotenv.Read()` when `server.Start()` runs. Importing the package for tests does not read configuration. Startup still requires the same `.env` file.
 
 Current backend config fields:
 
@@ -123,6 +123,12 @@ All caches use `server/cache.go`.
 | Background tiles | `variant/z/x/y` | 5 minutes |
 
 The cache is in memory only. It is not shared across processes or persisted across restarts.
+
+## Tests
+
+Run `go test -race ./...` and `go vet ./...` from the repository root. Backend tests replace provider HTTP transports with controlled responses and dummy configuration; they never need `.env` or live API access. `.github/workflows/test.yml` runs these checks on pushes and pull requests.
+
+Weather provider URLs contain an API key. Network failures are converted to safe errors before they can reach logs, and forecast failures return generic public errors.
 
 ## Frontend Routes
 

@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -34,7 +35,8 @@ func getForecast(lat, lon float64) ([]byte, error) {
 
 	resp, err := forecastHTTPClient.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("error fetching weather data: %w", err)
+		// net/http errors include the full URL, whose path contains the API key.
+		return nil, errors.New("weather provider request failed")
 	}
 	defer func() { _ = resp.Body.Close() }()
 
@@ -74,7 +76,7 @@ func getTimeMachine(lat, lon float64, ts int64) ([]byte, error) {
 
 	resp, err := forecastHTTPClient.Get(requestURL)
 	if err != nil {
-		return nil, fmt.Errorf("error fetching time machine data: %w", err)
+		return nil, errors.New("time machine request failed")
 	}
 	defer func() { _ = resp.Body.Close() }()
 
@@ -209,7 +211,7 @@ func ForecastHandler(w http.ResponseWriter, r *http.Request) {
 
 	forecastResp := <-forecastCh
 	if forecastResp.err != nil {
-		http.Error(w, fmt.Sprintf("Error fetching weather data: %v", forecastResp.err), http.StatusInternalServerError)
+		http.Error(w, "Error fetching weather data", http.StatusBadGateway)
 		return
 	}
 
@@ -222,7 +224,7 @@ func ForecastHandler(w http.ResponseWriter, r *http.Request) {
 	var forecastMap map[string]interface{}
 	err = json.Unmarshal(forecastResp.body, &forecastMap)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error parsing weather data: %v", err), http.StatusInternalServerError)
+		http.Error(w, "Error parsing weather data", http.StatusBadGateway)
 		return
 	}
 

@@ -11,6 +11,8 @@ rainbgone is a weather app with two runtimes: a Go HTTP backend (`server/`, star
 Backend:
 ```sh
 go run .
+go test -race ./...
+go vet ./...
 ```
 
 Frontend:
@@ -36,11 +38,11 @@ Run the narrowest relevant check for the files changed:
 - Formatting-only frontend changes: `cd frontend && npm run lint`
 - Docker/runtime changes: validate compose syntax or build the touched service
 
-There are no backend tests yet. If the user asks to skip validation, state that it was skipped.
+Backend tests use the standard library and fake HTTP transports; no API keys or live services are needed. CI runs them on pushes and pull requests. If the user asks to skip validation, state that it was skipped.
 
 ## Configuration
 
-The Go backend loads `.env` with `godotenv.Read()` at package init — it will **panic** on startup if `.env` is missing or unreadable. Current keys: `PIRATE_WEATHER_KEY`.
+The Go backend loads `.env` with `godotenv.Read()` when `server.Start()` runs — it will **panic** on startup if `.env` is missing or unreadable. Importing the package does not load secrets. Current keys: `PIRATE_WEATHER_KEY`.
 
 The SvelteKit proxy uses `API_PROXY_TARGET` and `VITE_API_PROXY_TARGET` (both default to `http://localhost:8080`).
 

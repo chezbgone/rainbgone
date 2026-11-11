@@ -6,7 +6,7 @@ type config struct {
 	pirateWeatherKey string
 }
 
-var appConfig = loadConfig()
+var appConfig config
 
 func loadConfig() config {
 	env, err := godotenv.Read()
