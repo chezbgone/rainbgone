@@ -43,7 +43,7 @@ func (b closingBody) Close() error {
 
 // Tests never run in parallel: they replace package-level clients and caches. Every
 // provider request is intercepted by a transport, including unexpected requests.
-func setupForecastTest(t *testing.T, transport roundTripFunc) <-chan struct{} {
+func setupForecastTest(t *testing.T, transport roundTripFunc, geocodeTransport ...roundTripFunc) <-chan struct{} {
 	t.Helper()
 	oldConfig, oldForecastClient, oldGeocodeClient := appConfig, forecastHTTPClient, geocodeHTTPClient
 	oldForecastCache, oldTimeMachineCache, oldGeocodeCache := forecastCache, timeMachineCache, reverseGeocodeCache
@@ -53,6 +53,14 @@ func setupForecastTest(t *testing.T, transport roundTripFunc) <-chan struct{} {
 	geocodeDone := make(chan struct{})
 	geocodeHTTPClient = &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
 		resp := testResponse(http.StatusOK, `{"lat":"47","lon":"-122","display_name":"Test location"}`)
+		if len(geocodeTransport) > 0 {
+			var err error
+			resp, err = geocodeTransport[0](r)
+			if err != nil {
+				close(geocodeDone)
+				return nil, err
+			}
+		}
 		resp.Body = closingBody{ReadCloser: resp.Body, done: geocodeDone}
 		return resp, nil
 	})}
@@ -194,5 +202,59 @@ func TestValidForecastIsCached(t *testing.T) {
 	}
 	if calls != 1 {
 		t.Fatalf("expected one provider call, got %d", calls)
+	}
+}
+
+func TestForecastSurvivesReverseGeocodeFailures(t *testing.T) {
+	for _, name := range []string{"no result", "provider error", "network failure", "empty address"} {
+		t.Run(name, func(t *testing.T) {
+			setupForecastTest(t, func(r *http.Request) (*http.Response, error) {
+				if r.URL.Host == "api.pirateweather.net" {
+					return testResponse(http.StatusOK, testForecast), nil
+				}
+				return testResponse(http.StatusServiceUnavailable, ""), nil
+			}, func(r *http.Request) (*http.Response, error) {
+				switch name {
+				case "network failure":
+					return nil, errors.New("synthetic geocoding outage")
+				case "provider error":
+					return testResponse(http.StatusServiceUnavailable, "Unavailable"), nil
+				case "empty address":
+					return testResponse(http.StatusOK, `{"lat":"47","lon":"-122","display_name":""}`), nil
+				default:
+					return testResponse(http.StatusOK, `{"error":"Unable to geocode"}`), nil
+				}
+			})
+			w := httptest.NewRecorder()
+			ForecastHandler(w, httptest.NewRequest(http.MethodGet, "/forecast?lat=47&lng=-122", nil))
+			if w.Code != http.StatusOK {
+				t.Fatalf("reverse geocode blocked weather: %d", w.Code)
+			}
+			var forecast map[string]interface{}
+			if err := json.Unmarshal(w.Body.Bytes(), &forecast); err != nil {
+				t.Fatal(err)
+			}
+			if forecast["formatted_address"] != "47.000000, -122.000000" || forecast["currently"] == nil {
+				t.Fatal("expected intact forecast with coordinate fallback")
+			}
+		})
+	}
+}
+
+func TestForecastUsesReverseGeocodedAddress(t *testing.T) {
+	setupForecastTest(t, func(r *http.Request) (*http.Response, error) {
+		if r.URL.Host == "api.pirateweather.net" {
+			return testResponse(http.StatusOK, testForecast), nil
+		}
+		return testResponse(http.StatusServiceUnavailable, ""), nil
+	})
+	w := httptest.NewRecorder()
+	ForecastHandler(w, httptest.NewRequest(http.MethodGet, "/forecast?lat=47&lng=-122", nil))
+	var forecast map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &forecast); err != nil {
+		t.Fatal(err)
+	}
+	if forecast["formatted_address"] != "Test location" {
+		t.Fatal("successful reverse geocoding was not used")
 	}
 }

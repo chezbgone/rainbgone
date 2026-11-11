@@ -252,9 +252,11 @@ func ForecastHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	geocodeResp := <-geocodeCh
-	if geocodeResp.err != nil {
-		http.Error(w, fmt.Sprintf("%v", geocodeResp.err), http.StatusBadRequest)
-		return
+	formattedAddress := fmt.Sprintf("%f, %f", lat, lng)
+	if geocodeResp.err == nil && geocodeResp.result != nil && geocodeResp.result.FormattedAddress != "" {
+		formattedAddress = geocodeResp.result.FormattedAddress
+	} else {
+		log.Print("reverse geocode unavailable, using coordinates for the forecast address")
 	}
 
 	var forecastMap map[string]interface{}
@@ -264,7 +266,7 @@ func ForecastHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	forecastMap["formatted_address"] = geocodeResp.result.FormattedAddress
+	forecastMap["formatted_address"] = formattedAddress
 
 	// The Time Machine call runs after (not concurrently with) the forecast fetch because
 	// it needs the location's timezone, which only the forecast response carries. It's

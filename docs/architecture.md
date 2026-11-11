@@ -56,9 +56,9 @@ The main forecast page is `frontend/src/routes/[lat=number],[lng=number]/+page.s
 2. The SvelteKit server load fetches `/api/forecast?lat=...&lng=...`.
 3. `frontend/src/hooks.server.ts` proxies `/api/forecast` to the Go backend `/forecast`.
 4. `ForecastHandler` parses `lat` and `lng`.
-5. `ForecastHandler` starts three requests concurrently: the Pirate Weather forecast, the Nominatim reverse geocode, and a Pirate Weather **Time Machine** request (`timemachine.pirateweather.net`) for the current instant.
+5. `ForecastHandler` starts the Pirate Weather forecast and Nominatim reverse geocode concurrently. The best-effort Time Machine backfill runs after the forecast provides the location's timezone.
 6. Only successful Pirate Weather responses with the required forecast blocks and a valid timezone are cached and unmarshaled into a map. Upstream HTTP errors or malformed payloads return a generic `502` and are retried on the next request.
-7. The reverse geocode result is added as `formatted_address`.
+7. The reverse geocode result is added as `formatted_address`. If reverse geocoding fails or returns no address, the forecast is still served with latitude and longitude as the label.
 8. An `hourlyFromMidnight` field is added: a flat hourly series anchored at today's local midnight. The regular forecast's hourly series starts at the *current hour*, so today's already-elapsed hours are prepended from the Time Machine response (which returns the full local day). The seam is a plain timestamp threshold — Time Machine hours earlier than the forecast's first (current) hour, then all regular forecast hours — so only today's past morning comes from the GFS-only Time Machine; everything the standard multi-model forecast covers is kept from it. The original `hourly` series is left untouched (the radar trigger and the "next 24h" strip depend on it starting at now). The Time Machine call is best-effort — on failure the series simply starts at the current hour. Per-day timelines are *not* sliced by fixed-size index arithmetic (see Details Page Flow) because a best-effort backfill can leave `hourlyFromMidnight` short or starting later than midnight, which would desync `i*24` boundaries from actual local days.
 9. The merged JSON response is returned to the frontend.
 
@@ -76,7 +76,7 @@ Address routes are handled by `frontend/src/routes/[address]/+page.server.ts`.
 4. `GeocodeHandler` calls Nominatim search and returns the first result.
 5. The frontend redirects to `/{lat},{lng}`.
 
-Reverse geocoding happens inside the forecast route so coordinate-based pages can still show a formatted location. Reverse geocode responses are cached in memory by latitude and longitude for 24 hours.
+Reverse geocoding happens inside the forecast route so coordinate-based pages can still show a formatted location. It is best-effort: outages, locations without a result, and empty addresses fall back to a coordinate label without blocking weather data. Reverse geocode responses are cached in memory by latitude and longitude for 24 hours.
 
 ## Details Page Flow
 
