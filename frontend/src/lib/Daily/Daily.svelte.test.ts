@@ -17,8 +17,8 @@ it('keeps each daily row on its local date when morning backfill is unavailable'
 	});
 	const rows = container.querySelectorAll('details');
 	expect(within(rows[0]).queryByText('1am')).toBeNull();
-	const firstTimelineLabel = rows[1].querySelector('.top-0');
-	expect(firstTimelineLabel?.textContent).toBe('12am');
+	const firstTimelineLabel = within(rows[1]).getAllByTestId('timeline-hour-label')[0];
+	expect(firstTimelineLabel.textContent).toBe('12am');
 });
 
 it('keeps daily rows usable when a later day has no hourly coverage', () => {

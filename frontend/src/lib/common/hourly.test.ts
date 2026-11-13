@@ -14,7 +14,7 @@ describe('daily hourly selection', () => {
 		expect(
 			today.slice(0, -1).every((h) => formatDateKey(h.time, 'America/Los_Angeles') === '2026-11-10')
 		).toBe(true);
-		expect(today.at(-1)).toBe(tomorrow[0]);
+		expect(today.at(-1)).toEqual(tomorrow[0]);
 	});
 
 	it.each([

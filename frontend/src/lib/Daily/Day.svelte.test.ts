@@ -28,7 +28,7 @@ it('updates icons and temperature-bar geometry when an existing day receives new
 	expect(summary.querySelector('img')?.getAttribute('src')).toBe('/weather-icons/rain.png');
 	expect((within(summary).getByText('40°') as HTMLElement).style.left).toBe('20%');
 	expect((within(summary).getByText('80°') as HTMLElement).style.left).toBe('60%');
-	const bar = summary.querySelector<HTMLElement>('.rounded-full')!;
+	const bar = within(summary).getByTestId('temperature-bar');
 	expect(bar.style.marginLeft).toBe('20%');
 	expect(bar.style.width).toBe('40%');
 });

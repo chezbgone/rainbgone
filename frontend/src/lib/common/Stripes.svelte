@@ -78,7 +78,10 @@
 		<div class="flex h-4 w-full justify-between pb-12">
 			{#each ticks as tick}
 				<div class="group relative even:hidden">
-					<div class="absolute top-0 text-xs not-group-first:-translate-x-1/2">
+					<div
+						data-testid="timeline-hour-label"
+						class="absolute top-0 text-xs not-group-first:-translate-x-1/2"
+					>
 						{formatUnixTime(tick.time, timezone)}
 					</div>
 					<div

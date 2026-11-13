@@ -45,6 +45,7 @@
 				>{Math.round(daily.temperatureMin)}°</span
 			>
 			<span
+				data-testid="temperature-bar"
 				class="absolute left-0 h-4 rounded-full bg-gray-700"
 				style="
           margin-left: {left}%;
