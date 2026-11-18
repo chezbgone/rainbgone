@@ -9,10 +9,9 @@ rainbgone is a weather forecast app with a Go HTTP backend and a SvelteKit front
 ├── main.go                  # Starts the Go backend
 ├── server/                  # Backend routes, provider calls, cache, config
 ├── frontend/                # SvelteKit app
-├── Dockerfile               # Backend production image
-├── frontend/Dockerfile      # Frontend dev/build/production image
-├── compose.dev.yaml         # Local two-service development stack
-└── compose.prod.yaml        # Production two-service stack (internal network, behind reverse proxy)
+├── Dockerfile               # Backend development image
+├── frontend/Dockerfile      # Frontend development image
+└── compose.dev.yaml         # Local two-service development stack
 ```
 
 ## Backend
@@ -175,19 +174,13 @@ Development compose file:
 - Frontend container runs `npm ci` before `vite dev` on every start, since its
   `frontend-node-modules` named volume only gets seeded from the image on first creation.
 
-Production compose file:
-
-- `compose.prod.yaml`
-- Services share an internal Docker network (`appnet`); no host ports are published.
-- Intended to run behind a reverse proxy that handles ingress (e.g. bind `127.0.0.1:3000:3000` or attach the proxy to `appnet`).
-- Frontend proxy target points at `http://backend:8080` via `API_PROXY_TARGET`.
-- References pre-built images (`image:`) rather than building on the host — see deployment below.
-
-Production deployment (pull-and-run, no on-host build):
-
-- `.github/workflows/deploy.yml` is manually triggered (`workflow_dispatch`) — run it deliberately when you want to ship a new image. It builds both images for `linux/arm64` and pushes to public GHCR packages `ghcr.io/chezbgone/rainbgone-backend` and `ghcr.io/chezbgone/rainbgone-frontend` (tags `latest` + commit SHA).
-- The production host (an arm64 EC2 nano) only runs `docker compose -f compose.prod.yaml pull && up -d`; it never compiles, which avoids OOM on its 512 MB RAM. Local development still builds from source via `compose.dev.yaml`.
-- Secrets are not baked into images: `.env` is `.dockerignore`d. In production the backend reads it at runtime via the `./.env` bind-mount (`compose.prod.yaml`); in development it arrives as part of the full-repo bind-mount at `/src` (`compose.dev.yaml`). Frontend config is injected at runtime through compose `environment:`. The GHCR packages can therefore be public.
+The personal deployment at `rainbgone.chezbg.one` is configured in the
+[chezbg-one deployment repo](https://github.com/chezbgone/chezbg-one). It builds
+from a source commit and provides the backend `.env` and frontend settings at
+runtime. For other hosts, build the Go binary with `go build .` and build the
+frontend with `npm ci` and `npm run build` in `frontend/`. Run `node build`
+with the production dependencies installed, and set `API_PROXY_TARGET` to
+the Go server URL.
 
 ## Change Guidance
 
